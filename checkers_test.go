@@ -7,10 +7,10 @@ import (
 func TestMovePiece(t *testing.T) {
 	tests := []struct {
 		name string
-		row int8
-		col int8
-		expectedRow int8
-		expectedCol int8
+		row int
+		col int
+		expectedRow int
+		expectedCol int
 		direction moveDir
 		wantErr bool
 	}{
@@ -51,7 +51,11 @@ func TestMovePiece(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T){
 			cfg := startCheckers()
-			err := cfg.movePiece(tt.row, tt.col, tt.direction)
+			err := cfg.movePiece(Move{
+				Row: tt.row,
+				Col: tt.col,
+				Direction: tt.direction,
+			})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("movePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
 				return

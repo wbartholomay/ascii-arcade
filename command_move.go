@@ -18,7 +18,7 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		return errors.New("error parsing row arg. expecting 1 character between a and f")
 	}
 
-	row := int8(rowRune - 'a')
+	row := int(rowRune - 'a')
 
 	col, err := strconv.ParseInt(params[1], 10, 8)
 	if err != nil {
@@ -44,8 +44,13 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		return errors.New("invalid move direction. Valid moves are 'l', 'r', 'bl', 'br'")
 	}
 	
+	move := Move{
+		Row: row,
+		Col: int(col),
+		Direction: direction,
+	}
 
-	if err = cfg.movePiece(int8(row), int8(col), direction); err != nil {
+	if err = cfg.movePiece(move); err != nil {
 		return err
 	}
 
@@ -53,26 +58,17 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 	return nil
 }
 
-type moveDir int8
-
-const (
-	moveLeft moveDir = iota
-	moveRight
-	moveBackLeft
-	moveBackRight
-)
 
 // movePiece - takes the initial and direction to move piece
 // validates the move can be made, and if it can the board is updated
-func (cfg *checkersCfg) movePiece(startRow, startCol int8, direction moveDir) error{
-	if direction > 3 {
+func (cfg *checkersCfg) movePiece(move Move) error{
+	if move.Direction > 3 {
 		return errors.New("invalid move option")
 	}
 
-	destRow, destCol := startRow, startCol
-	piece := cfg.Board[startRow][startCol]
+	destRow, destCol := move.Row, move.Col
+	piece := cfg.Board[move.Row][move.Col]
 
-	//TODO: update this to check if the piece is the players
 	if piece.Color == "" {
 		return errors.New("no piece on this square")
 	}
@@ -82,7 +78,7 @@ func (cfg *checkersCfg) movePiece(startRow, startCol int8, direction moveDir) er
 	}
 
 	//get absolute direction based on the inputted direction and the piece color
-	absoluteDir := direction
+	absoluteDir := move.Direction
 	if cfg.getCurrentPieces() == pieceBlack {
 		absoluteDir = convertDirection(absoluteDir)
 	}
@@ -109,11 +105,11 @@ func (cfg *checkersCfg) movePiece(startRow, startCol int8, direction moveDir) er
 
 	//update board
 	cfg.Board[destRow][destCol] = piece
-	cfg.Board[startRow][startCol] = Piece{}
+	cfg.Board[move.Row][move.Col] = Piece{}
 	return nil
 }
 
-func validateMove(cfg checkersCfg, row, col int8) error {
+func validateMove(cfg checkersCfg, row, col int) error {
 
 	if row < 0 || row > 7 || col < 0 || col > 7 {
 		return errors.New("cannot move a piece outside of the board")

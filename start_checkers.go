@@ -1,19 +1,5 @@
 package main
 
-type Piece struct {
-	ID int
-	Color string
-	IsKing bool
-}
-
-const pieceWhite = "W"
-const pieceBlack = "B"
-
-type checkersCfg struct {
-	Board [][]Piece
-	IsPlayerOneTurn bool
-}
-
 func startCheckers() checkersCfg {
 	//initialize board
 	board := initializeBoard()

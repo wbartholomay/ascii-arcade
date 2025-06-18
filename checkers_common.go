@@ -5,6 +5,36 @@ import (
 )
 
 
+type Piece struct {
+	ID int
+	Color string
+	IsKing bool
+}
+
+const pieceWhite = "W"
+const pieceBlack = "B"
+
+type checkersCfg struct {
+	Board [][]Piece
+	IsPlayerOneTurn bool
+}
+
+type moveDir int
+
+const (
+	moveLeft moveDir = iota
+	moveRight
+	moveBackLeft
+	moveBackRight
+)
+
+type Move struct {
+	Row int
+	Col int
+	Direction moveDir
+}
+
+
 func (cfg *checkersCfg) displayBoard() error {
 
 	rowNum := 0
@@ -71,4 +101,8 @@ func (cfg *checkersCfg) endTurn() error {
 	}
 
 	return nil
+}
+
+func (cfg *checkersCfg) isTileEmpty(row int, col int) bool {
+	return cfg.Board[row][col].Color == ""
 }
