@@ -20,9 +20,11 @@ func (cfg *checkersCfg) displayBoard() error {
 	if !cfg.IsPlayerOneTurn {
 		rowNum = 7
 		increment = -1
+		fmt.Println("       7       6       5       4       3       2       1       0    ")
+	} else {
+		fmt.Println("       0       1       2       3       4       5       6       7    ")
 	}
 
-	fmt.Println("       0       1       2       3       4       5       6       7    ")
 	for ; checkIndex(rowNum); rowNum += increment{
 		fmt.Println("   —————————————————————————————————————————————————————————————————")
 		fmt.Println("   |       |       |       |       |       |       |       |       |")
@@ -59,14 +61,14 @@ func (cfg *checkersCfg) getCurrentPieces() string {
 }
 
 func (cfg *checkersCfg) endTurn() error {
-	if cfg.IsPlayerOneTurn{
-		fmt.Println("Player 2's Turn:")
-	} else {
-		fmt.Println("Player 1's Turn:")
-	}
-
 	cfg.IsPlayerOneTurn = !cfg.IsPlayerOneTurn
 	cfg.displayBoard()
+
+	if cfg.IsPlayerOneTurn{
+		fmt.Println("Player 1's Turn:")
+	} else {
+		fmt.Println("Player 2's Turn:")
+	}
 
 	return nil
 }

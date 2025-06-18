@@ -73,7 +73,7 @@ func (cfg *checkersCfg) movePiece(startRow, startCol int8, direction moveDir) er
 	piece := cfg.Board[startRow][startCol]
 
 	//TODO: update this to check if the piece is the players
-	if piece.Color == "Piece" {
+	if piece.Color == "" {
 		return errors.New("no piece on this square")
 	}
 
