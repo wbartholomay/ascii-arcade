@@ -1,7 +1,7 @@
 package checkers
 
-type tileColor uint8
-type pieceStatus uint8
+type tileColor int8
+type pieceStatus int8
 
 const (
 	tileWhite tileColor = iota

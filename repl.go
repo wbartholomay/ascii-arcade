@@ -26,8 +26,8 @@ func getCommands() map[string]cliCommand {
 			description: "Exits the application",
 			callback: commandExit,
 		},
-		"start" : {
-			name: "start",
+		"checkers" : {
+			name: "checkers",
 			description: "Starts a new checkers game",
 			callback: commandStartCheckers,
 		},
