@@ -49,6 +49,7 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		return err
 	}
 
-	displayBoard(cfg)
+	cfg.displayBoard()
+	cfg.endTurn()
 	return nil
 }

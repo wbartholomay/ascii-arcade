@@ -1,6 +1,9 @@
 package main
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type moveDir int8
 
@@ -47,11 +50,11 @@ func movePiece(cfg *checkersCfg, startRow, startCol int8, direction moveDir) err
 		destRow += 1
 		destCol += 1
 	}
+
 	if err := validateMove(*cfg, destRow, destCol); err != nil {
 		return err
 	}
 
-	//TODO: add capture logic?
 	//update board
 	cfg.Board[destRow][destCol].pieceStatus = piece
 	cfg.Board[startRow][startCol].pieceStatus = pieceEmpty
@@ -85,4 +88,16 @@ func convertDirection(direction moveDir) moveDir {
 	default:
 		return moveLeft
 	}
+}
+
+func (cfg *checkersCfg) endTurn() error {
+	if cfg.PlayerPiece == pieceWhite {
+		fmt.Println("Player 2's Turn:")
+		cfg.PlayerPiece = pieceBlack
+	} else {
+		fmt.Println("Player 1's Turn:")
+		cfg.PlayerPiece = pieceWhite
+	}
+
+	return nil
 }

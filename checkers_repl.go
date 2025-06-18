@@ -34,7 +34,7 @@ func getCommands() map[string]cliCommand {
 		"board" : {
 			name: "board",
 			description: "Displays the current board state",
-			callback: displayBoard,
+			callback: commandBoard,
 		},
 	}
 }
@@ -51,6 +51,8 @@ func StartCheckersRepl() {
 	fmt.Println("Welcome to ASCII Checkers!")
 
 	cfg := startCheckers()
+	cfg.displayBoard()
+	fmt.Println("Player 1's Turn:")
 
 	for {
 		fmt.Print("Checkers > ")
