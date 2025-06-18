@@ -35,17 +35,17 @@ func movePiece(cfg *checkersCfg, startRow, startCol int8, direction moveDir) err
 	//validate move
 	switch absoluteDir{
 	case moveLeft:
-		destRow += 2
-		destCol -= 2
+		destRow -= 1
+		destCol -= 1
 	case moveRight:
-		destRow += 2
-		destCol += 2
+		destRow -= 1
+		destCol += 1
 	case moveBackLeft:
-		destRow -= 2
-		destCol -= 2
+		destRow += 1
+		destCol -= 1
 	case moveBackRight:
-		destRow -= 2
-		destCol += 2
+		destRow += 1
+		destCol += 1
 	}
 	if err := validateMove(*cfg, destRow, destCol); err != nil {
 		return err
