@@ -12,10 +12,13 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		return errors.New("not enough arguments. Expecting move <row> <col> <direction>")
 	}
 
-	row, err := strconv.ParseInt(params[0], 10, 8)
-	if err != nil {
-		return fmt.Errorf("error parsing row arg to int: %w", err)
+	rowRune := params[0][0]
+
+	if len(params[0]) > 1 || rowRune < 'a' || rowRune > 'f'{
+		return errors.New("error parsing row arg. expecting 1 character between a and f")
 	}
+
+	row := int8(rowRune - 'a')
 
 	col, err := strconv.ParseInt(params[1], 10, 8)
 	if err != nil {
@@ -46,5 +49,6 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		return err
 	}
 
+	displayBoard(cfg)
 	return nil
 }
