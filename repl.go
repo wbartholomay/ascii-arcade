@@ -7,18 +7,25 @@ import (
 	"os"
 )
 
-type config struct {
-
-}
 
 type cliCommand struct {
 	name string
 	description string
-	callback func(cfg *config, params ...string) error
+	callback func(params ...string) error
 }
 
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand {
+		"help" : {
+			name: "help",
+			description: "Displays a list of commmands",
+			callback: commandHelp,
+		},
+		"exit" : {
+			name: "exit",
+			description: "Exits the application",
+			callback: commandExit,
+		},
 	}
 }
 
@@ -29,7 +36,7 @@ func cleanInput(text string) []string {
 }
 
 //TODO: wrap this in an outer repl if more games than checkers exit
-func startRepl(cfg *config) {
+func startRepl() {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to ASCII Checkers!\nEnter 'help' to see a list of commands.")
 
@@ -47,7 +54,7 @@ func startRepl(cfg *config) {
 			continue
 		}
 
-		err := cmd.callback(cfg, input[1:]...)
+		err := cmd.callback(input[1:]...)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
