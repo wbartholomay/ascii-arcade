@@ -1,4 +1,4 @@
-package checkers
+package main
 
 type tileColor int8
 type pieceStatus int8
