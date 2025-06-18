@@ -70,14 +70,14 @@ func (cfg *checkersCfg) movePiece(startRow, startCol int8, direction moveDir) er
 	}
 
 	destRow, destCol := startRow, startCol
-	piece := cfg.Board[startRow][startCol].pieceStatus
+	piece := cfg.Board[startRow][startCol]
 
 	//TODO: update this to check if the piece is the players
-	if piece == pieceEmpty {
+	if piece.Color == "Piece" {
 		return errors.New("no piece on this square")
 	}
 
-	if piece != cfg.getCurrentPieces() {
+	if piece.Color != cfg.getCurrentPieces() {
 		return errors.New("you can only move your own pieces")
 	}
 
@@ -108,8 +108,8 @@ func (cfg *checkersCfg) movePiece(startRow, startCol int8, direction moveDir) er
 	}
 
 	//update board
-	cfg.Board[destRow][destCol].pieceStatus = piece
-	cfg.Board[startRow][startCol].pieceStatus = pieceEmpty
+	cfg.Board[destRow][destCol] = piece
+	cfg.Board[startRow][startCol] = Piece{}
 	return nil
 }
 
@@ -119,7 +119,7 @@ func validateMove(cfg checkersCfg, row, col int8) error {
 		return errors.New("cannot move a piece outside of the board")
 	}
 
-	if cfg.Board[row][col].pieceStatus != pieceEmpty {
+	if cfg.Board[row][col].Color != "" {
 		return errors.New("there is already a piece on that square")
 	}
 

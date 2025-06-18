@@ -34,8 +34,12 @@ func (cfg *checkersCfg) displayBoard() error {
 		}
 
 		for ; checkIndex(colNum); colNum += increment{
-			square := cfg.Board[rowNum][colNum]
-			rowStr += fmt.Sprintf("   %v   |", square.pieceStatus)
+			piece := cfg.Board[rowNum][colNum]
+			pieceStr := piece.Color
+			if pieceStr == "" {
+				pieceStr = " "
+			}
+			rowStr += fmt.Sprintf("   %v   |", pieceStr)
 		}
 		fmt.Println(rowStr)
 		fmt.Println("   |       |       |       |       |       |       |       |       |")
@@ -46,7 +50,7 @@ func (cfg *checkersCfg) displayBoard() error {
 }
 
 // GetCurrentPieces - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
-func (cfg *checkersCfg) getCurrentPieces() pieceStatus {
+func (cfg *checkersCfg) getCurrentPieces() string {
 	if cfg.IsPlayerOneTurn {
 		return pieceWhite
 	} else {

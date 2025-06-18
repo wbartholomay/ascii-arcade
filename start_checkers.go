@@ -1,26 +1,16 @@
 package main
 
-type tileColor int8
-type pieceStatus int8
-
-const (
-	tileWhite tileColor = iota
-	tileBlack
-)
-
-const (
-	pieceEmpty pieceStatus = iota
-	pieceWhite
-	pieceBlack
-)
-
-type tileStatus struct{
-	tileColor tileColor
-	pieceStatus pieceStatus
+type Piece struct {
+	ID int
+	Color string
+	IsKing bool
 }
 
+const pieceWhite = "W"
+const pieceBlack = "B"
+
 type checkersCfg struct {
-	Board [][]tileStatus
+	Board [][]Piece
 	IsPlayerOneTurn bool
 }
 
@@ -34,29 +24,35 @@ func startCheckers() checkersCfg {
 	}
 }
 
-func initializeBoard() [][]tileStatus {
-	board := make([][]tileStatus, 8)
-	for row := range board {
-		board[row] = make([]tileStatus, 8)
-		for col := range board[row] {
-			board[row][col] = tileStatus{}
+func initializeBoard() [][]Piece {
+	board := make([][]Piece, 8)
 
-			//initialize tile colors
-			isRowEven := (row % 2) == 0
-			isColumnEven := (col % 2) == 0
-			if isRowEven == isColumnEven {
-				board[row][col].tileColor = tileBlack
-			} else {
-				board[row][col].tileColor = tileWhite
-			}
+	whitePieceID := 0
+	blackPieceID := 0
+	
+	for row := range board {
+		board[row] = make([]Piece, 8)
+		for col := range board[row] {
+			hasPiece := ((row % 2) == 0) == ((col % 2) == 0)
 
 			//initialize pieces
-			if board[row][col].tileColor == tileBlack && row < 3 {
-				board[row][col].pieceStatus = pieceBlack
-			} else if board[row][col].tileColor == tileBlack && row > 4 {
-				board[row][col].pieceStatus = pieceWhite
+			if hasPiece && row < 3 {
+				board[row][col] = Piece{
+					ID: blackPieceID,
+					Color: pieceBlack,
+					IsKing: false,
+				}
+				blackPieceID++
+			} else if hasPiece && row > 4 {
+				board[row][col] = Piece{
+					ID: whitePieceID,
+					Color: pieceWhite,
+					IsKing: false,
+				}
+				whitePieceID++
 			} else {
-				board[row][col].pieceStatus = pieceEmpty
+				//leaving an empty struct here for now
+				board[row][col] = Piece{}
 			}
 		}
 	}

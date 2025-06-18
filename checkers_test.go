@@ -57,7 +57,7 @@ func TestMovePiece(t *testing.T) {
 				return
 			}
 
-			if !tt.wantErr && cfg.Board[tt.expectedRow][tt.expectedCol].pieceStatus == pieceEmpty{
+			if !tt.wantErr && cfg.Board[tt.expectedRow][tt.expectedCol].Color == ""{
 				t.Errorf("movePiece() did not move piece to expected square: (%v, %v)", tt.expectedRow, tt.expectedCol)
 				return
 			}
