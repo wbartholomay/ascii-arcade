@@ -23,7 +23,7 @@ type checkersCfg struct {
 	Board [][]tileStatus
 }
 
-func StartCheckers() checkersCfg {
+func startCheckers() checkersCfg {
 	//initialize board
 	board := initializeBoard()
 

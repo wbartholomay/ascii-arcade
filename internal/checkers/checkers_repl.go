@@ -1,4 +1,4 @@
-package main
+package checkers
 
 import (
 	"strings"
@@ -11,7 +11,7 @@ import (
 type cliCommand struct {
 	name string
 	description string
-	callback func(params ...string) error
+	callback func(cfg *checkersCfg, params ...string) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -23,13 +23,8 @@ func getCommands() map[string]cliCommand {
 		},
 		"exit" : {
 			name: "exit",
-			description: "Exits the application",
+			description: "Exits checkers",
 			callback: commandExit,
-		},
-		"start" : {
-			name: "start",
-			description: "Starts a new checkers game",
-			callback: commandStartCheckers,
 		},
 	}
 }
@@ -41,17 +36,21 @@ func cleanInput(text string) []string {
 }
 
 //TODO: wrap this in an outer repl if more games than checkers exit
-func startRepl() {
+func StartCheckersRepl() {
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Welcome to ASCII Arcade!")
+	fmt.Println("Welcome to ASCII Checkers!")
+
+	cfg := startCheckers()
 
 	for {
-		fmt.Print("Arcade > ")
+		fmt.Print("Checkers > ")
 		scanner.Scan()
 
 		t := scanner.Text()
 		input := cleanInput(t)
-		if len(input) == 0 { continue }
+		if len(input) == 0 { 
+			continue 
+		}
 
 		cmd, ok := getCommands()[input[0]]
 		if !ok{
@@ -59,7 +58,12 @@ func startRepl() {
 			continue
 		}
 
-		err := cmd.callback(input[1:]...)
+		//exit checkers game
+		if cmd.name == "exit" {
+			break
+		}
+
+		err := cmd.callback(&cfg, input[1:]...)
 		if err != nil {
 			fmt.Println(err.Error())
 		}

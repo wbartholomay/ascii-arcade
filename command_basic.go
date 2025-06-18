@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/wbarthol/ascii-arcade/internal/checkers"
 )
 
 func commandHelp(params ...string) error{
@@ -18,6 +20,12 @@ func commandHelp(params ...string) error{
 func commandExit(params ...string) error {
 	fmt.Println("Closing ASCII Checkers... Goodbye!")
 	os.Exit(0)
+
+	return nil
+}
+
+func commandStartCheckers(params ...string) error {
+	checkers.StartCheckersRepl()
 
 	return nil
 }
