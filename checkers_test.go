@@ -51,7 +51,7 @@ func TestMovePiece(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T){
 			cfg := startCheckers()
-			err := movePiece(&cfg, tt.row, tt.col, tt.direction)
+			err := cfg.movePiece(tt.row, tt.col, tt.direction)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("movePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
 				return

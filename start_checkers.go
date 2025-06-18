@@ -21,7 +21,7 @@ type tileStatus struct{
 
 type checkersCfg struct {
 	Board [][]tileStatus
-	PlayerPiece pieceStatus
+	IsPlayerOneTurn bool
 }
 
 func startCheckers() checkersCfg {
@@ -30,7 +30,7 @@ func startCheckers() checkersCfg {
 
 	return checkersCfg{
 		Board: board,
-		PlayerPiece: pieceWhite,
+		IsPlayerOneTurn: true,
 	}
 }
 
