@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
+	"slices"
 	"strconv"
+	"strings"
 )
 
 func commandMove(cfg *checkersCfg, params ...string) error {
@@ -72,6 +76,7 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 	
 	//validate move
 	targetRow, targetCol := applyDirection(move.Row, move.Col, move.Direction)
+	capturedPiece := false
 
 	if isOutOfBounds(targetRow, targetCol){
 		return errors.New("cannot move a piece outside of the board")
@@ -98,8 +103,6 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 		} else {
 			cfg.WhitePieceCount--
 		}
-
-		//check for double capture
 	}
 
 	cfg.Board[targetRow][targetCol] = piece
@@ -110,6 +113,41 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 		piece.IsKing = true
 	} else if piece.Color == pieceBlack && targetRow == 7 && !piece.IsKing {
 		piece.IsKing = true
+	}
+	if !capturedPiece {
+		return nil
+	}
+
+	//check for double capture
+	if capturedPiece {
+		nextMoves := cfg.checkSurroundingSquaresForCapture(targetRow, targetCol)
+		if len(nextMoves) == 0 {
+			return nil
+		}
+
+		cfg.displayBoard()
+		fmt.Print("Another capture is available, enter one of the following directions: ")
+		for _, moveStr := range nextMoves {
+			fmt.Printf("%v, ", moveStr)
+		}
+		fmt.Println()
+		input := ""
+		for {
+			fmt.Print("Checkers > ")
+			scanner := bufio.NewScanner(os.Stdin)
+			scanner.Scan()
+			input = strings.ToLower(scanner.Text())
+			if !slices.Contains(nextMoves, input){
+				fmt.Println("Please enter one of the displayed directions.")
+			} else {
+				break
+			}
+		}
+		return cfg.movePiece(Move{
+			Row: targetRow,
+			Col: targetCol,
+			Direction: movesMap[input],
+		})
 	}
 
 	return nil

@@ -45,7 +45,7 @@ type Move struct {
 }
 
 
-func (cfg *checkersCfg) displayBoard() error {
+func (cfg *checkersCfg) displayBoard() {
 
 	rowNum := 0
 	increment := 1
@@ -90,8 +90,6 @@ func (cfg *checkersCfg) displayBoard() error {
 		fmt.Println("   |       |       |       |       |       |       |       |       |")
 	}
 	fmt.Println("   —————————————————————————————————————————————————————————————————")
-
-	return nil
 }
 
 // GetCurrentPieces - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn

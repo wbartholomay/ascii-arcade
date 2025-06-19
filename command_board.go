@@ -1,5 +1,6 @@
 package main
 
 func commandBoard(cfg *checkersCfg, params ...string) error{
-	return cfg.displayBoard()
+	cfg.displayBoard()
+	return nil
 }
