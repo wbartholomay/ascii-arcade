@@ -16,7 +16,9 @@ const pieceBlack = "B"
 
 type checkersCfg struct {
 	Board [][]Piece
-	IsPlayerOneTurn bool
+	IsWhiteTurn bool
+	WhitePieceCount int
+	BlackPieceCount int
 }
 
 type moveDir int
@@ -42,14 +44,14 @@ func (cfg *checkersCfg) displayBoard() error {
 	rowNum := 0
 	increment := 1
 	checkIndex := func (i int) bool {
-		if cfg.IsPlayerOneTurn {
+		if cfg.IsWhiteTurn {
 			return i < 8
 		} else {
 			return i >= 0
 		}
 	}
 
-	if !cfg.IsPlayerOneTurn {
+	if !cfg.IsWhiteTurn {
 		rowNum = 7
 		increment = -1
 		fmt.Println("       7       6       5       4       3       2       1       0    ")
@@ -63,7 +65,7 @@ func (cfg *checkersCfg) displayBoard() error {
 		rowStr := fmt.Sprintf("%v  |", string(rune('a' + rowNum)))
 
 		colNum := 0
-		if !cfg.IsPlayerOneTurn {
+		if !cfg.IsWhiteTurn {
 			colNum = 7
 		}
 
@@ -85,7 +87,7 @@ func (cfg *checkersCfg) displayBoard() error {
 
 // GetCurrentPieces - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
 func (cfg *checkersCfg) getPlayerColor() string {
-	if cfg.IsPlayerOneTurn {
+	if cfg.IsWhiteTurn {
 		return pieceWhite
 	} else {
 		return pieceBlack
@@ -93,13 +95,19 @@ func (cfg *checkersCfg) getPlayerColor() string {
 }
 
 func (cfg *checkersCfg) endTurn() error {
-	cfg.IsPlayerOneTurn = !cfg.IsPlayerOneTurn
+	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
 	cfg.displayBoard()
-
-	if cfg.IsPlayerOneTurn{
-		fmt.Println("Player 1's Turn:")
+	fmt.Printf("White Pieces Remaining: %v    Black Pieces Remaining: %v", cfg.WhitePieceCount, cfg.BlackPieceCount)
+	if cfg.WhitePieceCount == 0 {
+		fmt.Println("White Wins!")
 	} else {
-		fmt.Println("Player 2's Turn:")
+		fmt.Println("Black Wins!")
+	}
+
+	if cfg.IsWhiteTurn{
+		fmt.Println("White's Turn:")
+	} else {
+		fmt.Println("Black's Turn:")
 	}
 
 	return nil

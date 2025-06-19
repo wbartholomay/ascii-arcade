@@ -13,8 +13,8 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 	}
 
 	rowRune := params[0][0]
-	if len(params[0]) > 1 || rowRune < 'a' || rowRune > 'f'{
-		return errors.New("error parsing row arg. expecting 1 character between a and f")
+	if len(params[0]) > 1 || rowRune < 'a' || rowRune > 'h'{
+		return errors.New("error parsing row arg. expecting 1 character between a and h")
 	}
 	row := int(rowRune - 'a')
 
@@ -80,7 +80,6 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 	
 	//validate move
 	move.applyDirection()
-	fmt.Printf("NEW ROW: %v	  NEW COL: %v\n", move.DestRow, move.DestCol)
 
 	if err := validateMove(cfg, &move); err != nil {
 		return err
@@ -123,7 +122,11 @@ func attemptCapture(cfg *checkersCfg, move *Move) error {
 	}
 
 	//capture piece
-	fmt.Printf("CAPTURING PIECE AT (%v, %v)\n", captureRow, captureCol)
+	if cfg.getPlayerColor() == "W" {
+		cfg.BlackPieceCount--
+	} else {
+		cfg.WhitePieceCount--
+	}
 	cfg.Board[captureRow][captureCol] = Piece{}
 
 	return nil

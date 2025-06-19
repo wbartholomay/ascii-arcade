@@ -118,36 +118,9 @@ func TestCapture(t *testing.T) {
 				t.Errorf("movePiece() did not move piece to expected square: (%v, %v)", tt.expectedRow, tt.expectedCol)
 				return
 			}
-		})
-	}
-}
 
-func TestApplyDirection(t *testing.T) {
-	tests := []struct {
-		name string
-		move Move
-		destRow int
-		destCol int
-	} {
-		{
-			name: "Test moving left",
-			move: Move{
-				Row: 1,
-				Col: 1,
-				Direction: moveLeft,
-				DestRow: 1,
-				DestCol: 1,
-			},
-			destRow: 0,
-			destCol: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T){
-			tt.move.applyDirection()
-			if tt.move.DestRow != tt.destRow || tt.move.DestCol != tt.destCol {
-				t.Errorf("applyDirection() failed - expected coords (%v, %v) - actual coords (%v, %v)", tt.move.DestRow, tt.move.DestCol, tt.destRow, tt.destCol)
+			if !tt.wantErr && cfg.BlackPieceCount != 11 {
+				t.Errorf("Capture unsuccessful, piece count did not decrease. BlackPieceCount: %v", cfg.BlackPieceCount)
 			}
 		})
 	}

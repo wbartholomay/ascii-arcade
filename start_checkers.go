@@ -6,7 +6,9 @@ func startCheckers() checkersCfg {
 
 	return checkersCfg{
 		Board: board,
-		IsPlayerOneTurn: true,
+		IsWhiteTurn: true,
+		WhitePieceCount: 12,
+		BlackPieceCount: 12,
 	}
 }
 
