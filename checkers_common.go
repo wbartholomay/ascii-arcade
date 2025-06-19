@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 
@@ -11,8 +12,8 @@ type Piece struct {
 	IsKing bool
 }
 
-const pieceWhite = "W"
-const pieceBlack = "B"
+const pieceWhite = "w"
+const pieceBlack = "b"
 
 type checkersCfg struct {
 	Board [][]Piece
@@ -30,12 +31,17 @@ const (
 	moveBackRight
 )
 
+var movesMap = map[string]moveDir{
+	"l":  moveLeft,
+	"r":  moveRight,
+	"bl": moveBackLeft,
+	"br": moveBackRight,
+}
+
 type Move struct {
 	Row int
 	Col int
 	Direction moveDir
-	DestRow int
-	DestCol int
 }
 
 
@@ -75,6 +81,9 @@ func (cfg *checkersCfg) displayBoard() error {
 			if pieceStr == "" {
 				pieceStr = " "
 			}
+			if piece.IsKing {
+				pieceStr = strings.ToUpper(pieceStr)
+			}
 			rowStr += fmt.Sprintf("   %v   |", pieceStr)
 		}
 		fmt.Println(rowStr)
@@ -97,10 +106,11 @@ func (cfg *checkersCfg) getPlayerColor() string {
 func (cfg *checkersCfg) endTurn() error {
 	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
 	cfg.displayBoard()
-	fmt.Printf("White Pieces Remaining: %v    Black Pieces Remaining: %v", cfg.WhitePieceCount, cfg.BlackPieceCount)
+	fmt.Printf("White Pieces Remaining: %v    Black Pieces Remaining: %v\n", cfg.WhitePieceCount, cfg.BlackPieceCount)
 	if cfg.WhitePieceCount == 0 {
+		//TODO: Add logic to end game (will need to add bool return somewhere to be passed up the stack to the repl)
 		fmt.Println("White Wins!")
-	} else {
+	} else if cfg.BlackPieceCount == 0{
 		fmt.Println("Black Wins!")
 	}
 
@@ -113,29 +123,27 @@ func (cfg *checkersCfg) endTurn() error {
 	return nil
 }
 
-func (cfg *checkersCfg) isTileEmpty(row int, col int) bool {
-	return cfg.Board[row][col].Color == ""
-}
-
 func isOutOfBounds(row, col int) bool {
 	return row < 0 || row > 7 || col < 0 || col > 7
 }
 
-func (move *Move) applyDirection() {
-	switch move.Direction{
+func applyDirection(row, col int, direction moveDir) (int, int){
+	switch direction{
 	case moveLeft:
-		move.DestRow -= 1
-		move.DestCol -= 1
+		row -= 1
+		col -= 1
 	case moveRight:
-		move.DestRow -= 1
-		move.DestCol += 1
+		row -= 1
+		col += 1
 	case moveBackLeft:
-		move.DestRow += 1
-		move.DestCol -= 1
+		row += 1
+		col -= 1
 	case moveBackRight:
-		move.DestRow += 1
-		move.DestCol += 1
+		row += 1
+		col += 1
 	}
+
+	return row, col
 }
 
 func convertDirection(direction moveDir) moveDir {
@@ -150,5 +158,12 @@ func convertDirection(direction moveDir) moveDir {
 		return moveLeft
 	default:
 		return moveLeft
+	}
+}
+
+func (cfg *checkersCfg) clearBoard() {
+	cfg.Board = make([][]Piece, 8)
+	for i := range cfg.Board {
+		cfg.Board[i] = make([]Piece, 8)
 	}
 }

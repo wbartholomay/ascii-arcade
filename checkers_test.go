@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -46,6 +47,13 @@ func TestMovePiece(t *testing.T) {
 			direction: moveRight,
 			wantErr: true,
 		},
+		{
+			name: "Attempt to move backwards as not king",
+			row: 6,
+			col: 0,
+			direction: moveBackLeft,
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -55,8 +63,6 @@ func TestMovePiece(t *testing.T) {
 				Row: tt.row,
 				Col: tt.col,
 				Direction: tt.direction,
-				DestRow: tt.row,
-				DestCol: tt.col,
 			})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("movePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
@@ -106,8 +112,6 @@ func TestCapture(t *testing.T) {
 				Row: tt.row,
 				Col: tt.col,
 				Direction: tt.direction,
-				DestRow: tt.row,
-				DestCol: tt.col,
 			})
 
 			if (err != nil) != tt.wantErr {
@@ -124,4 +128,99 @@ func TestCapture(t *testing.T) {
 			}
 		})
 	}
+}
+func TestCheckSurroundingSquaresForCapture(t *testing.T) {
+    cfg := startCheckers()
+	type testPiece struct {
+		row int
+		col int
+		color string
+		isKing bool
+	}
+
+	tests := []struct {
+		name string
+		row int
+		col int
+		pieces []testPiece
+		isWhiteTurn bool
+		expectedMoves []string
+	}{
+		{
+			name: "No captures",
+			row: 3,
+			col: 3,
+			isWhiteTurn: true,
+			pieces: []testPiece{
+				{
+					row: 3,
+					col: 3,
+					color: pieceWhite,
+				},
+			},
+			expectedMoves: []string{},
+		},
+		{
+			name: "Capture to left",
+			row: 3,
+			col: 3,
+			isWhiteTurn: true,
+			pieces: []testPiece{
+				{
+					row: 3,
+					col: 3,
+					color: pieceWhite,
+				},
+				{
+					row: 2,
+					col: 2,
+					color: pieceBlack,
+				},
+			},
+			expectedMoves: []string{"l"},
+		},{
+			name: "Black king capture to right and back right",
+			row: 3,
+			col: 3,
+			isWhiteTurn: false,
+			pieces: []testPiece{
+				{
+					row: 3,
+					col: 3,
+					color: pieceBlack,
+					isKing: true,
+				},
+				{
+					row: 4,
+					col: 2,
+					color: pieceWhite,
+				},
+				{
+					row: 2,
+					col: 2,
+					color: pieceWhite,
+				},
+			},
+			expectedMoves: []string{"r", "br"},
+		},
+		
+		
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg.clearBoard()
+			cfg.IsWhiteTurn = tt.isWhiteTurn
+			for _, piece := range tt.pieces {
+				cfg.Board[piece.row][piece.col] = Piece{
+					Color: piece.color,
+					IsKing: piece.isKing,
+				}
+			}
+			moves := cfg.checkSurroundingSquaresForCapture(tt.row, tt.col)
+			if !reflect.DeepEqual(moves, tt.expectedMoves) {
+				t.Errorf("test checkSurroundingSquaresForCapture() failed. Expected moves: %v   Actual moves: %v", tt.expectedMoves, moves)
+			}
+		})
+	} 
 }

@@ -28,17 +28,8 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 	}
 	
 	directionString := params[2]
-	var direction moveDir
-	switch directionString{
-	case "l":
-		direction = moveLeft
-	case "r":
-		direction = moveRight
-	case "bl":
-		direction = moveBackLeft
-	case "br":
-		direction = moveBackRight
-	default:
+	direction, ok := movesMap[directionString]
+	if !ok {
 		return errors.New("invalid move direction. Valid moves are 'l', 'r', 'bl', 'br'")
 	}
 
@@ -47,8 +38,6 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		Row: row,
 		Col: int(col),
 		Direction: direction,
-		DestRow: row,
-		DestCol: int(col),
 	}
 
 	if err = cfg.movePiece(move); err != nil {
@@ -65,69 +54,107 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 func (cfg *checkersCfg) movePiece(move Move) error{
 	piece := cfg.Board[move.Row][move.Col]
 
+	//check selected square
 	if piece.Color == "" {
 		return errors.New("no piece on this square")
 	}
-
 	if piece.Color != cfg.getPlayerColor() {
 		return errors.New("you can only move your own pieces")
 	}
+	if (move.Direction == moveBackLeft || move.Direction == moveBackRight) && !piece.IsKing {
+		return errors.New("only kings can move backwards")
+	}
 
-	//get absolute direction based on the inputted direction and the piece color
-	if cfg.getPlayerColor() == pieceBlack {
+	//get absolute direction based on the input direction and the piece color
+	if !cfg.IsWhiteTurn {
 		move.Direction = convertDirection(move.Direction)
 	}
 	
 	//validate move
-	move.applyDirection()
+	targetRow, targetCol := applyDirection(move.Row, move.Col, move.Direction)
 
-	if err := validateMove(cfg, &move); err != nil {
-		return err
+	if isOutOfBounds(targetRow, targetCol){
+		return errors.New("cannot move a piece outside of the board")
 	}
 
-	//update board
-	cfg.Board[move.DestRow][move.DestCol] = piece
+	if cfg.Board[targetRow][targetCol].Color == cfg.getPlayerColor() {
+		return errors.New("target square is occupied")
+	}
+	if cfg.Board[targetRow][targetCol].Color != cfg.getPlayerColor() && cfg.Board[targetRow][targetCol].Color != ""{
+		//attempt capture
+		captureRow, captureCol := targetRow, targetCol
+		targetRow, targetCol = applyDirection(targetRow, targetCol, move.Direction)
+		if isOutOfBounds(targetRow, targetCol){
+			return errors.New("cannot move a piece outside of the board")
+		}
+
+		if cfg.Board[targetRow][targetCol].Color != "" {
+			return errors.New("target square is occupied")
+		}
+
+		cfg.Board[captureRow][captureCol] = Piece{}
+		if cfg.getPlayerColor() == pieceWhite {
+			cfg.BlackPieceCount--
+		} else {
+			cfg.WhitePieceCount--
+		}
+
+		//check for double capture
+	}
+
+	cfg.Board[targetRow][targetCol] = piece
 	cfg.Board[move.Row][move.Col] = Piece{}
+
+	//attempt king
+	if piece.Color == pieceWhite && targetRow == 0 && !piece.IsKing{
+		piece.IsKing = true
+	} else if piece.Color == pieceBlack && targetRow == 7 && !piece.IsKing {
+		piece.IsKing = true
+	}
+
 	return nil
 }
 
-func validateMove(cfg *checkersCfg, move *Move) error {
+func (cfg *checkersCfg) checkSurroundingSquaresForCapture(row, col int) []string{
+	piece := cfg.Board[row][col]
+	captureMoves := []string{}
 
-	if isOutOfBounds(move.DestRow, move.DestCol){
-		return errors.New("cannot move a piece outside of the board")
+	//if the piece is not a king, only check forward moves. Otherwise, check all directions
+	moves := []string{"l", "r"}
+	if piece.IsKing {
+			moves = append(moves, "bl", "br")
+	}
+	
+	for _, moveStr := range moves {
+		move := movesMap[moveStr]
+
+		if !cfg.IsWhiteTurn {
+			move = convertDirection(move)
+		}
+
+		targetRow, targetCol := applyDirection(row, col, move)
+		fmt.Printf("Target row: %v   Target col: %v   Move direction: %v\n", targetRow, targetCol, moveStr)
+
+		if cfg.Board[targetRow][targetCol].Color == cfg.getPlayerColor() || cfg.Board[targetRow][targetCol].Color == "" {
+			continue
+		}
+		targetRow, targetCol = applyDirection(targetRow, targetCol, move)
+		if isAvailable, _ := cfg.isSquareAvailable(targetRow, targetCol); isAvailable {
+			captureMoves = append(captureMoves, moveStr)
+		}
 	}
 
-	if cfg.Board[move.DestRow][move.DestCol].Color != "" {
-		return attemptCapture(cfg, move)
-	}
-
-	//TODO: add logic to check if a piece is a king, and allow backwards moves only if it is a king
-	return nil
+	return captureMoves
 }
 
-func attemptCapture(cfg *checkersCfg, move *Move) error {
-	if cfg.Board[move.DestRow][move.DestCol].Color == cfg.getPlayerColor() {
-		return errors.New("there is already a piece on that square")
-	}
-	//check next tile
-	captureRow, captureCol := move.DestRow, move.DestCol
-	move.applyDirection()
-	//if space behind piece is not open
-	if isOutOfBounds(move.DestRow, move.DestCol){
-		return errors.New("cannot move a piece outside of the board")
+func (cfg *checkersCfg) isSquareAvailable(row, col int) (bool, error){
+	if isOutOfBounds(row, col){
+			return false, errors.New("cannot move a piece outside of the board")
+		}
+
+	if cfg.Board[row][col].Color != "" {
+		return false, errors.New("target square is occupied")
 	}
 
-	if !cfg.isTileEmpty(move.DestRow, move.DestCol) {
-		return fmt.Errorf("there is already a piece on square (%v, %v)", move.DestRow, move.DestCol)
-	}
-
-	//capture piece
-	if cfg.getPlayerColor() == "W" {
-		cfg.BlackPieceCount--
-	} else {
-		cfg.WhitePieceCount--
-	}
-	cfg.Board[captureRow][captureCol] = Piece{}
-
-	return nil
+	return true, nil
 }
