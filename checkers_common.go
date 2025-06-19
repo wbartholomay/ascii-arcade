@@ -101,15 +101,16 @@ func (cfg *checkersCfg) getPlayerColor() string {
 	}
 }
 
-func (cfg *checkersCfg) endTurn() error {
+func (cfg *checkersCfg) endTurn() bool {
 	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
 	cfg.displayBoard()
 	fmt.Printf("White Pieces Remaining: %v    Black Pieces Remaining: %v\n", cfg.WhitePieceCount, cfg.BlackPieceCount)
 	if cfg.WhitePieceCount == 0 {
-		//TODO: Add logic to end game (will need to add bool return somewhere to be passed up the stack to the repl)
 		fmt.Println("White Wins!")
+		return true
 	} else if cfg.BlackPieceCount == 0{
 		fmt.Println("Black Wins!")
+		return true
 	}
 
 	if cfg.IsWhiteTurn{
@@ -118,7 +119,7 @@ func (cfg *checkersCfg) endTurn() error {
 		fmt.Println("Black's Turn:")
 	}
 
-	return nil
+	return false
 }
 
 func isOutOfBounds(row, col int) bool {

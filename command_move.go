@@ -48,7 +48,10 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		return err
 	}
 
-	cfg.endTurn()
+	gameOver := cfg.endTurn()
+	if gameOver {
+		os.Exit(0)
+	}
 	return nil
 }
 
