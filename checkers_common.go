@@ -32,6 +32,8 @@ type Move struct {
 	Row int
 	Col int
 	Direction moveDir
+	DestRow int
+	DestCol int
 }
 
 
@@ -82,7 +84,7 @@ func (cfg *checkersCfg) displayBoard() error {
 }
 
 // GetCurrentPieces - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
-func (cfg *checkersCfg) getCurrentPieces() string {
+func (cfg *checkersCfg) getPlayerColor() string {
 	if cfg.IsPlayerOneTurn {
 		return pieceWhite
 	} else {
@@ -105,4 +107,40 @@ func (cfg *checkersCfg) endTurn() error {
 
 func (cfg *checkersCfg) isTileEmpty(row int, col int) bool {
 	return cfg.Board[row][col].Color == ""
+}
+
+func isOutOfBounds(row, col int) bool {
+	return row < 0 || row > 7 || col < 0 || col > 7
+}
+
+func (move *Move) applyDirection() {
+	switch move.Direction{
+	case moveLeft:
+		move.DestRow -= 1
+		move.DestCol -= 1
+	case moveRight:
+		move.DestRow -= 1
+		move.DestCol += 1
+	case moveBackLeft:
+		move.DestRow += 1
+		move.DestCol -= 1
+	case moveBackRight:
+		move.DestRow += 1
+		move.DestCol += 1
+	}
+}
+
+func convertDirection(direction moveDir) moveDir {
+	switch direction{
+	case moveLeft:
+		return moveBackRight
+	case moveRight:
+		return moveBackLeft
+	case moveBackLeft:
+		return moveRight
+	case moveBackRight:
+		return moveLeft
+	default:
+		return moveLeft
+	}
 }

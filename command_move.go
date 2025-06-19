@@ -13,11 +13,9 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 	}
 
 	rowRune := params[0][0]
-
 	if len(params[0]) > 1 || rowRune < 'a' || rowRune > 'f'{
 		return errors.New("error parsing row arg. expecting 1 character between a and f")
 	}
-
 	row := int(rowRune - 'a')
 
 	col, err := strconv.ParseInt(params[1], 10, 8)
@@ -28,7 +26,7 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 	if row < 0 || row > 7 || col < 0 || col > 7 {
 		return errors.New("row and col must be within range [0,7]")
 	}
-
+	
 	directionString := params[2]
 	var direction moveDir
 	switch directionString{
@@ -43,11 +41,14 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 	default:
 		return errors.New("invalid move direction. Valid moves are 'l', 'r', 'bl', 'br'")
 	}
+
 	
 	move := Move{
 		Row: row,
 		Col: int(col),
 		Direction: direction,
+		DestRow: row,
+		DestCol: int(col),
 	}
 
 	if err = cfg.movePiece(move); err != nil {
@@ -62,78 +63,68 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 // movePiece - takes the initial and direction to move piece
 // validates the move can be made, and if it can the board is updated
 func (cfg *checkersCfg) movePiece(move Move) error{
-	if move.Direction > 3 {
-		return errors.New("invalid move option")
-	}
-
-	destRow, destCol := move.Row, move.Col
 	piece := cfg.Board[move.Row][move.Col]
 
 	if piece.Color == "" {
 		return errors.New("no piece on this square")
 	}
 
-	if piece.Color != cfg.getCurrentPieces() {
+	if piece.Color != cfg.getPlayerColor() {
 		return errors.New("you can only move your own pieces")
 	}
 
 	//get absolute direction based on the inputted direction and the piece color
-	absoluteDir := move.Direction
-	if cfg.getCurrentPieces() == pieceBlack {
-		absoluteDir = convertDirection(absoluteDir)
+	if cfg.getPlayerColor() == pieceBlack {
+		move.Direction = convertDirection(move.Direction)
 	}
 	
 	//validate move
-	switch absoluteDir{
-	case moveLeft:
-		destRow -= 1
-		destCol -= 1
-	case moveRight:
-		destRow -= 1
-		destCol += 1
-	case moveBackLeft:
-		destRow += 1
-		destCol -= 1
-	case moveBackRight:
-		destRow += 1
-		destCol += 1
-	}
+	move.applyDirection()
+	fmt.Printf("NEW ROW: %v	  NEW COL: %v\n", move.DestRow, move.DestCol)
 
-	if err := validateMove(*cfg, destRow, destCol); err != nil {
+	if err := validateMove(cfg, &move); err != nil {
 		return err
 	}
 
 	//update board
-	cfg.Board[destRow][destCol] = piece
+	cfg.Board[move.DestRow][move.DestCol] = piece
 	cfg.Board[move.Row][move.Col] = Piece{}
 	return nil
 }
 
-func validateMove(cfg checkersCfg, row, col int) error {
+func validateMove(cfg *checkersCfg, move *Move) error {
 
-	if row < 0 || row > 7 || col < 0 || col > 7 {
+	if isOutOfBounds(move.DestRow, move.DestCol){
 		return errors.New("cannot move a piece outside of the board")
 	}
 
-	if cfg.Board[row][col].Color != "" {
-		return errors.New("there is already a piece on that square")
+	if cfg.Board[move.DestRow][move.DestCol].Color != "" {
+		return attemptCapture(cfg, move)
 	}
 
 	//TODO: add logic to check if a piece is a king, and allow backwards moves only if it is a king
 	return nil
 }
 
-func convertDirection(direction moveDir) moveDir {
-	switch direction{
-	case moveLeft:
-		return moveBackRight
-	case moveRight:
-		return moveBackLeft
-	case moveBackLeft:
-		return moveRight
-	case moveBackRight:
-		return moveLeft
-	default:
-		return moveLeft
+func attemptCapture(cfg *checkersCfg, move *Move) error {
+	if cfg.Board[move.DestRow][move.DestCol].Color == cfg.getPlayerColor() {
+		return errors.New("there is already a piece on that square")
 	}
+	//check next tile
+	captureRow, captureCol := move.DestRow, move.DestCol
+	move.applyDirection()
+	//if space behind piece is not open
+	if isOutOfBounds(move.DestRow, move.DestCol){
+		return errors.New("cannot move a piece outside of the board")
+	}
+
+	if !cfg.isTileEmpty(move.DestRow, move.DestCol) {
+		return fmt.Errorf("there is already a piece on square (%v, %v)", move.DestRow, move.DestCol)
+	}
+
+	//capture piece
+	fmt.Printf("CAPTURING PIECE AT (%v, %v)\n", captureRow, captureCol)
+	cfg.Board[captureRow][captureCol] = Piece{}
+
+	return nil
 }
