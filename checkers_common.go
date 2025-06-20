@@ -90,7 +90,7 @@ func (cfg *checkersCfg) displayBoard() {
 			if piece.IsKing {
 				pieceStr = strings.ToUpper(pieceStr)
 			}
-			rowStr += fmt.Sprintf("   %v%v |", pieceStr, piece.getDisplayID(piece.ID))
+			rowStr += fmt.Sprintf("  %v%v  |", pieceStr, piece.getDisplayID(piece.ID))
 		}
 		fmt.Println(rowStr)
 		fmt.Println("   |       |       |       |       |       |       |       |       |")
@@ -194,13 +194,13 @@ func (piece *Piece) getDisplayID(id int) string {
 	}
 }
 
-func (piece *Piece) getActualID(id int) int {
+func getActualID(color string, id int) int {
 	//don't rlly want to throw an error here, the -1 should at least tell me something has gone wrong
 	if id == 0 {
 		return -1
 	}
 
-	if piece.Color == pieceWhite {
+	if color == pieceWhite {
 		return id + 100
 	} else {
 		return id + 200

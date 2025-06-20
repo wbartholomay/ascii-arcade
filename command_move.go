@@ -12,26 +12,22 @@ import (
 
 func commandMove(cfg *checkersCfg, params ...string) error {
 	//validate params - expecting move <row> <col> <direction>
-	if len(params) < 3{
-		return errors.New("not enough arguments. Expecting move <row> <col> <direction>")
+	if len(params) < 2{
+		return errors.New("not enough arguments. Expecting move <piece number> <direction>")
 	}
 
-	rowRune := params[0][0]
-	if len(params[0]) > 1 || rowRune < 'a' || rowRune > 'h'{
-		return errors.New("error parsing row arg. expecting 1 character between a and h")
-	}
-	row := int(rowRune - 'a')
-
-	col, err := strconv.ParseInt(params[1], 10, 8)
+	pieceNum, err := strconv.ParseInt(params[0], 10, 8)
 	if err != nil {
-		return fmt.Errorf("error parsing col arg to int: %w", err)
+		return fmt.Errorf("expected a number, got: %v", params[0])
 	}
 
-	if row < 0 || row > 7 || col < 0 || col > 7 {
-		return errors.New("row and col must be within range [0,7]")
+	pieceId := getActualID(cfg.getPlayerColor(), int(pieceNum))
+	piece, ok := cfg.Pieces[pieceId]
+	if !ok {
+		return fmt.Errorf("invalid piece number: %v", params[0])
 	}
-	
-	directionString := params[2]
+
+	directionString := params[1]
 	direction, ok := movesMap[directionString]
 	if !ok {
 		return errors.New("invalid move direction. Valid moves are 'l', 'r', 'bl', 'br'")
@@ -39,8 +35,8 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 
 	
 	move := Move{
-		Row: row,
-		Col: int(col),
+		Row: piece.Row,
+		Col: piece.Col,
 		Direction: direction,
 	}
 
