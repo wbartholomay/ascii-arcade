@@ -21,11 +21,6 @@ func getCommands() map[string]cliCommand {
 			description: "Displays a list of commmands",
 			callback: commandHelp,
 		},
-		"exit" : {
-			name: "exit",
-			description: "Exits checkers",
-			callback: commandExit,
-		},
 		"move" : {
 			name: "move",
 			description: "Move a piece. Takes arguments <row> <col> <direction {'l', 'r', 'bl', 'br'}>",

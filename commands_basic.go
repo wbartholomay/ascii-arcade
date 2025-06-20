@@ -15,12 +15,6 @@ func commandHelp(cfg *checkersCfg, params ...string) error{
 	return nil
 }
 
-func commandExit(cfg *checkersCfg, params ...string) error {
-	fmt.Println("Closing ASCII Checkers... Goodbye!")
-
-	return nil
-}
-
 func commandBoard(cfg *checkersCfg, params ...string) error{
 	cfg.displayBoard()
 	return nil
