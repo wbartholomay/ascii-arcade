@@ -62,7 +62,6 @@ func (cfg *checkersCfg) getPlayerColor() string {
 func (cfg *checkersCfg) endTurn() bool {
 	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
 	cfg.displayBoard()
-	fmt.Printf("White Pieces Remaining: %v    Black Pieces Remaining: %v\n", cfg.WhitePieceCount, cfg.BlackPieceCount)
 	if cfg.WhitePieceCount == 0 {
 		fmt.Println("Black Wins!")
 		return true
