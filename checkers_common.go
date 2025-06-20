@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 
@@ -50,53 +49,6 @@ type Move struct {
 	Direction moveDir
 }
 
-
-func (cfg *checkersCfg) displayBoard() {
-
-	rowNum := 0
-	increment := 1
-	checkIndex := func (i int) bool {
-		if cfg.IsWhiteTurn {
-			return i < 8
-		} else {
-			return i >= 0
-		}
-	}
-
-	if !cfg.IsWhiteTurn {
-		rowNum = 7
-		increment = -1
-		fmt.Println("       7       6       5       4       3       2       1       0    ")
-	} else {
-		fmt.Println("       0       1       2       3       4       5       6       7    ")
-	}
-
-	for ; checkIndex(rowNum); rowNum += increment{
-		fmt.Println("   —————————————————————————————————————————————————————————————————")
-		fmt.Println("   |       |       |       |       |       |       |       |       |")
-		rowStr := fmt.Sprintf("%v  |", string(rune('a' + rowNum)))
-
-		colNum := 0
-		if !cfg.IsWhiteTurn {
-			colNum = 7
-		}
-
-		for ; checkIndex(colNum); colNum += increment{
-			piece := cfg.Board[rowNum][colNum]
-			pieceStr := piece.Color
-			if pieceStr == "" {
-				pieceStr = " "
-			}
-			if piece.IsKing {
-				pieceStr = strings.ToUpper(pieceStr)
-			}
-			rowStr += fmt.Sprintf("  %v%v  |", pieceStr, piece.getDisplayID(piece.ID))
-		}
-		fmt.Println(rowStr)
-		fmt.Println("   |       |       |       |       |       |       |       |       |")
-	}
-	fmt.Println("   —————————————————————————————————————————————————————————————————")
-}
 
 // getPlayerColor - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
 func (cfg *checkersCfg) getPlayerColor() string {
@@ -172,28 +124,6 @@ func (cfg *checkersCfg) clearBoard() {
 		cfg.Board[i] = make([]Piece, 8)
 	}
 }
-
-//This function kinda sucks but its temporary anyway
-func (piece *Piece) getDisplayID(id int) string {
-	//don't rlly want to throw an error here, the -1 should at least tell me something has gone wrong
-	if id == 0 {
-		return "  "
-	}
-
-	displayId := 0
-	if piece.Color == pieceWhite {
-		displayId = id - 100
-	} else {
-		displayId = id - 200
-	}
-
-	if displayId >= 10 {
-		return fmt.Sprintf("%v", displayId)
-	} else {
-		return fmt.Sprintf("%v ", displayId)
-	}
-}
-
 func getActualID(color string, id int) int {
 	//don't rlly want to throw an error here, the -1 should at least tell me something has gone wrong
 	if id == 0 {

@@ -107,6 +107,10 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 		}
 	}
 
+	tmpPiece := cfg.Pieces[piece.ID]
+	tmpPiece.Row, tmpPiece.Col = targetRow, targetCol
+	cfg.Pieces[piece.ID] = tmpPiece
+	
 	cfg.Board[targetRow][targetCol] = piece
 	cfg.Board[move.Row][move.Col] = Piece{}
 

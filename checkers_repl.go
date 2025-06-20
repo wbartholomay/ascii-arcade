@@ -23,7 +23,7 @@ func getCommands() map[string]cliCommand {
 		},
 		"move" : {
 			name: "move",
-			description: "Move a piece. Takes arguments <row> <col> <direction {'l', 'r', 'bl', 'br'}>",
+			description: "Move a piece. Takes arguments <piece-number> <direction {'l', 'r', 'bl', 'br'}>",
 			callback: commandMove,
 		},
 		"board" : {
@@ -52,7 +52,7 @@ func StartCheckersRepl() {
 
 	cfg := startCheckers()
 	cfg.displayBoard()
-	fmt.Println("Player 1's Turn:")
+	fmt.Println("White's Turn:")
 
 	for {
 		fmt.Print("Checkers > ")
