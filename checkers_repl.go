@@ -36,6 +36,11 @@ func getCommands() map[string]cliCommand {
 			description: "Displays the current board state",
 			callback: commandBoard,
 		},
+		"concede" : {
+			name: "concede",
+			description: "Concede the game",
+			callback: commandConcede,
+		},
 	}
 }
 
