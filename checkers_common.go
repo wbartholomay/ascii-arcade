@@ -12,11 +12,18 @@ type Piece struct {
 	IsKing bool
 }
 
+type Coords struct {
+	Row int
+	Col int
+}
+
 const pieceWhite = "w"
 const pieceBlack = "b"
 
 type checkersCfg struct {
 	Board [][]Piece
+	WhitePieces map[int]Coords
+	BlackPieces map[int]Coords
 	IsWhiteTurn bool
 	WhitePieceCount int
 	BlackPieceCount int

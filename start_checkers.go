@@ -2,21 +2,25 @@ package main
 
 func startCheckers() checkersCfg {
 	//initialize board
-	board := initializeBoard()
+	board, whitePieces, blackPieces := initializeBoard()
 
 	return checkersCfg{
 		Board: board,
+		WhitePieces: whitePieces,
+		BlackPieces: blackPieces,
 		IsWhiteTurn: true,
 		WhitePieceCount: 12,
 		BlackPieceCount: 12,
 	}
 }
 
-func initializeBoard() [][]Piece {
+func initializeBoard() ([][]Piece, map[int]Coords, map[int]Coords) {
 	board := make([][]Piece, 8)
+	whitePieces := map[int]Coords{}
+	blackPieces := map[int]Coords{}
 
-	whitePieceID := 0
-	blackPieceID := 0
+	whitePieceID := 1
+	blackPieceID := 1
 	
 	for row := range board {
 		board[row] = make([]Piece, 8)
@@ -30,12 +34,20 @@ func initializeBoard() [][]Piece {
 					Color: pieceBlack,
 					IsKing: false,
 				}
+				blackPieces[blackPieceID] = Coords{
+					Row: row,
+					Col: col,
+				}
 				blackPieceID++
 			} else if hasPiece && row > 4 {
 				board[row][col] = Piece{
 					ID: whitePieceID,
 					Color: pieceWhite,
 					IsKing: false,
+				}
+				whitePieces[whitePieceID] = Coords{
+					Row: row,
+					Col: col,
 				}
 				whitePieceID++
 			} else {
@@ -45,5 +57,5 @@ func initializeBoard() [][]Piece {
 		}
 	}
 
-	return board
+	return board, whitePieces, blackPieces
 }
