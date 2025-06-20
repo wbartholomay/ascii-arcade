@@ -101,9 +101,12 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 		}
 
 		cfg.Board[captureRow][captureCol] = Piece{}
+		capturedPiece = true
 		if cfg.getPlayerColor() == pieceWhite {
+			fmt.Println("Captured a black piece!")
 			cfg.BlackPieceCount--
 		} else {
+			fmt.Println("Captured a white piece!")
 			cfg.WhitePieceCount--
 		}
 	}
@@ -113,9 +116,9 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 
 	//attempt king
 	if piece.Color == pieceWhite && targetRow == 0 && !piece.IsKing{
-		piece.IsKing = true
+		cfg.Board[targetRow][targetCol].IsKing = true
 	} else if piece.Color == pieceBlack && targetRow == 7 && !piece.IsKing {
-		piece.IsKing = true
+		cfg.Board[targetRow][targetCol].IsKing = true
 	}
 	if !capturedPiece {
 		return nil
@@ -174,8 +177,9 @@ func (cfg *checkersCfg) checkSurroundingSquaresForCapture(row, col int) []string
 		}
 
 		targetRow, targetCol := applyDirection(row, col, move)
-		fmt.Printf("Target row: %v   Target col: %v   Move direction: %v\n", targetRow, targetCol, moveStr)
-
+		if isOutOfBounds(targetRow, targetCol) {
+			continue
+		}
 		if cfg.Board[targetRow][targetCol].Color == cfg.getPlayerColor() || cfg.Board[targetRow][targetCol].Color == "" {
 			continue
 		}

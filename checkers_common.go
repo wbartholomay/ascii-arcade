@@ -106,10 +106,10 @@ func (cfg *checkersCfg) endTurn() bool {
 	cfg.displayBoard()
 	fmt.Printf("White Pieces Remaining: %v    Black Pieces Remaining: %v\n", cfg.WhitePieceCount, cfg.BlackPieceCount)
 	if cfg.WhitePieceCount == 0 {
-		fmt.Println("White Wins!")
+		fmt.Println("Black Wins!")
 		return true
 	} else if cfg.BlackPieceCount == 0{
-		fmt.Println("Black Wins!")
+		fmt.Println("White Wins!")
 		return true
 	}
 

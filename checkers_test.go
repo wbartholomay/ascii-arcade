@@ -224,3 +224,48 @@ func TestCheckSurroundingSquaresForCapture(t *testing.T) {
 		})
 	} 
 }
+
+func TestKing(t *testing.T) {
+	cfg := startCheckers()
+	cfg.clearBoard()
+	//initialize white piece one away from becoming king
+	cfg.Board[1][1] = Piece{
+		Color: pieceWhite,
+		IsKing: false,
+	}
+
+	cfg.movePiece(Move{
+		Row: 1,
+		Col: 1,
+		Direction: moveLeft,
+	})
+
+	piece := cfg.Board[0][0]
+	if !piece.IsKing {
+		t.Errorf("King not working. Piece at (0,0) - Color: %v   IsKing: %v", piece.Color, piece.IsKing)
+	}
+}
+
+/* func TestDoubleCapture(t *testing.T) {
+	cfg := startCheckers()
+	cfg.clearBoard()
+	cfg.Board[4][4] = Piece{
+		Color: pieceWhite,
+	}
+	cfg.Board[3][3] = Piece{
+		Color: pieceBlack,
+	}
+	cfg.Board[1][1] = Piece{
+		Color: pieceBlack,
+	}
+
+	cfg.movePiece(Move{
+		Row: 4,
+		Col: 4,
+		Direction: moveLeft,
+	})
+
+	if cfg.Board[0][0].Color != pieceWhite {
+		t.Error("Double capture failed")
+	}
+} */
