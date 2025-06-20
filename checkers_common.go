@@ -22,8 +22,7 @@ const pieceBlack = "b"
 
 type checkersCfg struct {
 	Board [][]Piece
-	WhitePieces map[int]Coords
-	BlackPieces map[int]Coords
+	Pieces map[int]Coords
 	IsWhiteTurn bool
 	WhitePieceCount int
 	BlackPieceCount int
@@ -91,7 +90,7 @@ func (cfg *checkersCfg) displayBoard() {
 			if piece.IsKing {
 				pieceStr = strings.ToUpper(pieceStr)
 			}
-			rowStr += fmt.Sprintf("   %v   |", pieceStr)
+			rowStr += fmt.Sprintf("   %v%v |", pieceStr, piece.getDisplayID(piece.ID))
 		}
 		fmt.Println(rowStr)
 		fmt.Println("   |       |       |       |       |       |       |       |       |")
@@ -99,7 +98,7 @@ func (cfg *checkersCfg) displayBoard() {
 	fmt.Println("   —————————————————————————————————————————————————————————————————")
 }
 
-// GetCurrentPieces - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
+// getPlayerColor - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
 func (cfg *checkersCfg) getPlayerColor() string {
 	if cfg.IsWhiteTurn {
 		return pieceWhite
@@ -171,5 +170,39 @@ func (cfg *checkersCfg) clearBoard() {
 	cfg.Board = make([][]Piece, 8)
 	for i := range cfg.Board {
 		cfg.Board[i] = make([]Piece, 8)
+	}
+}
+
+//This function kinda sucks but its temporary anyway
+func (piece *Piece) getDisplayID(id int) string {
+	//don't rlly want to throw an error here, the -1 should at least tell me something has gone wrong
+	if id == 0 {
+		return "  "
+	}
+
+	displayId := 0
+	if piece.Color == pieceWhite {
+		displayId = id - 100
+	} else {
+		displayId = id - 200
+	}
+
+	if displayId >= 10 {
+		return fmt.Sprintf("%v", displayId)
+	} else {
+		return fmt.Sprintf("%v ", displayId)
+	}
+}
+
+func (piece *Piece) getActualID(id int) int {
+	//don't rlly want to throw an error here, the -1 should at least tell me something has gone wrong
+	if id == 0 {
+		return -1
+	}
+
+	if piece.Color == pieceWhite {
+		return id + 100
+	} else {
+		return id + 200
 	}
 }

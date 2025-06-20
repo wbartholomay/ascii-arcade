@@ -2,25 +2,24 @@ package main
 
 func startCheckers() checkersCfg {
 	//initialize board
-	board, whitePieces, blackPieces := initializeBoard()
+	board, pieces := initializeBoard()
 
 	return checkersCfg{
 		Board: board,
-		WhitePieces: whitePieces,
-		BlackPieces: blackPieces,
+		Pieces: pieces,
 		IsWhiteTurn: true,
 		WhitePieceCount: 12,
 		BlackPieceCount: 12,
 	}
 }
 
-func initializeBoard() ([][]Piece, map[int]Coords, map[int]Coords) {
+func initializeBoard() ([][]Piece, map[int]Coords) {
 	board := make([][]Piece, 8)
-	whitePieces := map[int]Coords{}
-	blackPieces := map[int]Coords{}
+	pieces := map[int]Coords{}
 
-	whitePieceID := 1
-	blackPieceID := 1
+	//start white ids at 101, black ids at 201
+	whitePieceID := 101
+	blackPieceID := 201
 	
 	for row := range board {
 		board[row] = make([]Piece, 8)
@@ -34,7 +33,7 @@ func initializeBoard() ([][]Piece, map[int]Coords, map[int]Coords) {
 					Color: pieceBlack,
 					IsKing: false,
 				}
-				blackPieces[blackPieceID] = Coords{
+				pieces[blackPieceID] = Coords{
 					Row: row,
 					Col: col,
 				}
@@ -45,7 +44,7 @@ func initializeBoard() ([][]Piece, map[int]Coords, map[int]Coords) {
 					Color: pieceWhite,
 					IsKing: false,
 				}
-				whitePieces[whitePieceID] = Coords{
+				pieces[whitePieceID] = Coords{
 					Row: row,
 					Col: col,
 				}
@@ -57,5 +56,5 @@ func initializeBoard() ([][]Piece, map[int]Coords, map[int]Coords) {
 		}
 	}
 
-	return board, whitePieces, blackPieces
+	return board, pieces
 }
