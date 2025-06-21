@@ -117,9 +117,10 @@ func commandMove(cfg *clientData, params ...string) error {
 	}
 
 	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
-	clientToServer <- clientToServerData{
+	SendDataToServer(clientToServerData{
 		Move: move,
-	}
+	})
+
 	data := serverToClientData{}
 	for {
 		data = <- serverToClient
@@ -142,9 +143,9 @@ func commandMove(cfg *clientData, params ...string) error {
 					break
 				}
 			}
-			clientToServer<- clientToServerData{
+			SendDataToServer(clientToServerData{
 				DoubleJumpDirection: input,
-			}
+			})
 		} else {
 			break
 		}

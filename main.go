@@ -1,5 +1,15 @@
 package main
 
+type gameType int
+
+const (
+	gameLocal gameType = iota
+	gameOnline
+	gameSingle
+)
+
+var GameType gameType
+
 type serverToClientData struct {
 	Board [8][8]Piece `json:"board"`
 	Pieces map[int]Coords `json:"pieces"`
@@ -33,6 +43,7 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
+	GameType = gameLocal
 	go StartServerRoutine()
 	ClientRoutine()
 }
