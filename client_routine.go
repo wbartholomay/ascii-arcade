@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -119,8 +120,35 @@ func commandMove(cfg *clientData, params ...string) error {
 	clientToServer <- clientToServerData{
 		Move: move,
 	}
-
-	data := <- serverToClient
+	data := serverToClientData{}
+	for {
+		data = <- serverToClient
+		if data.IsDoubleJump {
+			displayBoard(data.Board, cfg.IsWhiteTurn)
+			fmt.Print("Another capture is available, enter one of the following directions: ")
+			for _, moveStr := range data.DoubleJumpOptions {
+				fmt.Printf("%v, ", moveStr)
+			}
+			fmt.Println()
+			input := ""
+			for {
+				fmt.Print("Checkers > ")
+				scanner := bufio.NewScanner(os.Stdin)
+				scanner.Scan()
+				input = strings.ToLower(scanner.Text())
+				if !slices.Contains(data.DoubleJumpOptions, input){
+					fmt.Println("Please enter one of the displayed directions.")
+				} else {
+					break
+				}
+			}
+			clientToServer<- clientToServerData{
+				DoubleJumpDirection: input,
+			}
+		} else {
+			break
+		}
+	}
 	
 
 	if data.Error != nil {

@@ -3,12 +3,15 @@ package main
 type serverToClientData struct {
 	Board [8][8]Piece `json:"board"`
 	Pieces map[int]Coords `json:"pieces"`
+	IsDoubleJump bool  `json:"is_double_jump"`
+	DoubleJumpOptions []string `json:"double_jump_options"`
 	Error error		  `json:"error"`
 	GameOver bool     `json:"game_over"`
 }
 
 type clientToServerData struct {
 	Move Move         `json:"move"`
+	DoubleJumpDirection string `json:"double_jump_direction"`
 }
 
 var (
