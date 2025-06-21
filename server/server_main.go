@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net"
@@ -57,12 +56,6 @@ func StartCheckersGame(g *Game) {
 	defer player1.Close()
 	defer player2.Close()
 
-	input1 := make(chan string)
-	input2 := make(chan string)
-
-	go handleInput(player1, input1, g, true)
-	go handleInput(player2, input2, g, false)
-
 	//signal to clients that the game has started
 	time.Sleep(2 * time.Second)
 	player1.SetWriteDeadline(time.Now().Add(10 * time.Second))
@@ -81,42 +74,40 @@ func StartCheckersGame(g *Game) {
 	connPlayerOne := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
 		Conn: player1,
 	}
-	// connPlayerTwo := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
-	// 	Conn: player2,
-	// }
+	connPlayerTwo := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
+		Conn: player2,
+	}
+	currentConn := &connPlayerOne
 
 	cfg := checkers.StartCheckers()
-	err = connPlayerOne.SendData(checkers.ServerToClientData{
-		Board:    cfg.Board,
-		Pieces:   cfg.Pieces,
-		Error:    nil,
-		GameOver: false,
-	}, 10)
+	
 	if err != nil {
-		//abort game
+		fmt.Println(err)
 	}
 
 	for {
-		inputChan := input1
-		receivingConn := player2
-		if !g.playerOneTurn {
-			inputChan = input2
-			receivingConn = player1
+		err = currentConn.SendData(checkers.ServerToClientData{
+			Board:    cfg.Board,
+			Pieces:   cfg.Pieces,
+			Error:    nil,
+			GameOver: false,
+		}, 10)
+		if err != nil {
+			fmt.Println(err)
 		}
-		input := <-inputChan
-		receivingConn.Write([]byte(input))
-		g.playerOneTurn = !g.playerOneTurn
+		data, err := currentConn.ReceiveData(0)
+		if err != nil {
+			fmt.Println(err)
+		}
+		if err = cfg.MovePiece(data.Move, currentConn); err != nil{
+			fmt.Println(err)
+		}
+
+		if currentConn == &connPlayerOne{
+			currentConn = &connPlayerTwo
+		} else {
+			currentConn = &connPlayerOne
+		}
 	}
 
-}
-
-func handleInput(conn net.Conn, ch chan<- string, g *Game, isPlayerOne bool) {
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		if isPlayerOne != g.playerOneTurn {
-			conn.Write([]byte("Waiting on other player...\n"))
-			continue
-		}
-		ch <- scanner.Text()
-	}
 }

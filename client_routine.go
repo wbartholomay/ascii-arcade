@@ -19,15 +19,16 @@ type clientData struct {
 
 func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData]) {
 	//TODO: TIMING OUT HERE. NEED TO CONFIGURE SENDING DATA FROM THE SERVER TO THIS POINT.
+	whiteTurn := true
+	if playerNumber == "2" {
+		whiteTurn = false
+		fmt.Println("Waiting for player 1 to make their move...")
+	}
+	fmt.Println()
 	data, err := transport.ReceiveData(0)
 	if err != nil {
 		fmt.Println(err)
 		return
-	}
-
-	whiteTurn := true
-	if playerNumber == "2" {
-		whiteTurn = false
 	}
 
 	cfg := clientData{
