@@ -50,12 +50,6 @@ func main() {
 		}
 		fmt.Print("Please select a game type:\n1. Online Multiplayer\n2. Local Multiplayer\n3. Local Singleplayer\n4. Exit\nEnter 1, 2, 3, or 4: ")
 	}
-	// buf := make([]byte, 1)
-	// _, err = conn.Read(buf)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 }
 
 func StartLocalGame() {
@@ -84,6 +78,9 @@ func StartOnlineGame() {
 	//TODO: create abstraction of this function, which sends something to the server to notify the client is closed?
 	//May not be necessary as the server will timeout when trying to read from the client, will see about this
 	defer serverConn.Close()
+	transport := checkers.WebTransport[checkers.ClientToServerData, checkers.ServerToClientData] {
+		Conn: serverConn,
+	}
 
 	buf := make([]byte, 1024)
 	serverConn.SetReadDeadline(time.Now().Add(10 * time.Second))
@@ -107,5 +104,5 @@ func StartOnlineGame() {
 	}
 
 	fmt.Println("Opponent found, starting game!")
-	ClientRoutine(nil)
+	ClientRoutine(&transport)
 }
