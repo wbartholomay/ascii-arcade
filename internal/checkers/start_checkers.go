@@ -1,13 +1,13 @@
-package main
+package checkers
 
-func startCheckers() checkersCfg {
+func StartCheckers() checkersCfg {
 	//initialize board
 	board, pieces := initializeBoard()
 
 	return checkersCfg{
-		Board: board,
-		Pieces: pieces,
-		IsWhiteTurn: true,
+		Board:           board,
+		Pieces:          pieces,
+		IsWhiteTurn:     true,
 		WhitePieceCount: 12,
 		BlackPieceCount: 12,
 	}
@@ -20,7 +20,7 @@ func initializeBoard() ([8][8]Piece, map[int]Coords) {
 	//start white ids at 101, black ids at 201
 	whitePieceID := 101
 	blackPieceID := 201
-	
+
 	for row := range board {
 		for col := range board[row] {
 			hasPiece := ((row % 2) == 0) == ((col % 2) == 0)
@@ -28,8 +28,8 @@ func initializeBoard() ([8][8]Piece, map[int]Coords) {
 			//initialize pieces
 			if hasPiece && row < 3 {
 				board[row][col] = Piece{
-					ID: blackPieceID,
-					Color: pieceBlack,
+					ID:     blackPieceID,
+					Color:  pieceBlack,
 					IsKing: false,
 				}
 				pieces[blackPieceID] = Coords{
@@ -39,8 +39,8 @@ func initializeBoard() ([8][8]Piece, map[int]Coords) {
 				blackPieceID++
 			} else if hasPiece && row > 4 {
 				board[row][col] = Piece{
-					ID: whitePieceID,
-					Color: pieceWhite,
+					ID:     whitePieceID,
+					Color:  pieceWhite,
 					IsKing: false,
 				}
 				pieces[whitePieceID] = Coords{

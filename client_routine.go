@@ -8,31 +8,38 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/wbarthol/ascii-arcade/internal/checkers"
 )
 
 type clientData struct {
-	Pieces map[int]Coords
-	IsWhiteTurn bool
+	Pieces             map[int]checkers.Coords
+	IsWhiteTurn        bool
+	ClientToServerConn interface{}
+	ServerToClientConn interface{}
 }
 
-func ClientRoutine() {
-	data, err := WaitForDataFromServer()
+func ClientRoutine(serverToClientConn interface{}, clientToServerConn interface{}) {
+	//TODO: TIMING OUT HERE. NEED TO CONFIGURE SENDING DATA FROM THE SERVER TO THIS POINT.
+	data, err := checkers.WaitForDataFromServer(serverToClientConn)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	whiteTurn := false
-	if playerNumber == "1" {
-		whiteTurn = true
+	whiteTurn := true
+	if playerNumber == "2" {
+		whiteTurn = false
 	}
 
-	cfg := clientData {
-		Pieces: data.Pieces,
-		IsWhiteTurn: whiteTurn,
+	cfg := clientData{
+		Pieces:             data.Pieces,
+		IsWhiteTurn:        whiteTurn,
+		ClientToServerConn: clientToServerConn,
+		ServerToClientConn: serverToClientConn,
 	}
 
-	displayBoard(data.Board, cfg.IsWhiteTurn)
+	checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -41,12 +48,12 @@ func ClientRoutine() {
 
 		t := scanner.Text()
 		input := cleanInput(t)
-		if len(input) == 0 { 
-			continue 
+		if len(input) == 0 {
+			continue
 		}
 
 		cmd, ok := getCommands()[input[0]]
-		if !ok{
+		if !ok {
 			fmt.Println("Unknown command. Enter 'help' to see a list of commands.")
 			continue
 		}
@@ -63,27 +70,27 @@ func ClientRoutine() {
 }
 
 type cliCommand struct {
-	name string
+	name        string
 	description string
-	callback func(cfg *clientData, params ...string) error
+	callback    func(cfg *clientData, params ...string) error
 }
 
 func getCommands() map[string]cliCommand {
-	return map[string]cliCommand {
-		"help" : {
-			name: "help",
+	return map[string]cliCommand{
+		"help": {
+			name:        "help",
 			description: "Displays a list of commmands",
-			callback: commandHelp,
+			callback:    commandHelp,
 		},
-		"move" : {
-			name: "move",
+		"move": {
+			name:        "move",
 			description: "Move a piece. Takes arguments <piece-number> <direction {'l', 'r', 'bl', 'br'}>",
-			callback: commandMove,
+			callback:    commandMove,
 		},
-		"concede" : {
-			name: "concede",
+		"concede": {
+			name:        "concede",
 			description: "Concede the game",
-			callback: commandConcede,
+			callback:    commandConcede,
 		},
 	}
 }
@@ -96,7 +103,7 @@ func cleanInput(text string) []string {
 
 func commandMove(cfg *clientData, params ...string) error {
 	//validate params - expecting move <row> <col> <direction>
-	if len(params) < 2{
+	if len(params) < 2 {
 		return errors.New("not enough arguments. Expecting move <piece number> <direction>")
 	}
 
@@ -105,41 +112,40 @@ func commandMove(cfg *clientData, params ...string) error {
 		return fmt.Errorf("expected a number, got: %v", params[0])
 	}
 
-	pieceId := getActualID(getPlayerColor(cfg), int(pieceNum))
+	pieceId := checkers.GetActualID(checkers.GetPlayerColor(cfg.IsWhiteTurn), int(pieceNum))
 	piece, ok := cfg.Pieces[pieceId]
 	if !ok {
 		return fmt.Errorf("invalid piece number: %v", params[0])
 	}
 
 	directionString := params[1]
-	direction, ok := movesMap[directionString]
+	direction, ok := checkers.MovesMap[directionString]
 	if !ok {
 		return errors.New("invalid move direction. Valid moves are 'l', 'r', 'bl', 'br'")
 	}
 
-	
-	move := Move{
-		Row: piece.Row,
-		Col: piece.Col,
+	move := checkers.Move{
+		Row:       piece.Row,
+		Col:       piece.Col,
 		Direction: direction,
 	}
 
 	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
-	err = SendDataToServer(clientToServerData{
+	err = checkers.SendDataToServer(checkers.ClientToServerData{
 		Move: move,
-	})
+	},cfg.ClientToServerConn)
 	if err != nil {
 		return err
 	}
 
-	data := serverToClientData{}
+	data := checkers.ServerToClientData{}
 	for {
-		data, err = WaitForDataFromServer()
+		data, err = checkers.WaitForDataFromServer(cfg.ServerToClientConn)
 		if err != nil {
 			return err
 		}
 		if data.IsDoubleJump {
-			displayBoard(data.Board, cfg.IsWhiteTurn)
+			checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
 			fmt.Print("Another capture is available, enter one of the following directions: ")
 			for _, moveStr := range data.DoubleJumpOptions {
 				fmt.Printf("%v, ", moveStr)
@@ -151,15 +157,15 @@ func commandMove(cfg *clientData, params ...string) error {
 				scanner := bufio.NewScanner(os.Stdin)
 				scanner.Scan()
 				input = strings.ToLower(scanner.Text())
-				if !slices.Contains(data.DoubleJumpOptions, input){
+				if !slices.Contains(data.DoubleJumpOptions, input) {
 					fmt.Println("Please enter one of the displayed directions.")
 				} else {
 					break
 				}
 			}
-			err = SendDataToServer(clientToServerData{
+			err = checkers.SendDataToServer(checkers.ClientToServerData{
 				DoubleJumpDirection: input,
-			})
+			}, cfg.ClientToServerConn)
 			if err != nil {
 				return err
 			}
@@ -167,7 +173,6 @@ func commandMove(cfg *clientData, params ...string) error {
 			break
 		}
 	}
-	
 
 	if data.Error != nil {
 		return data.Error
@@ -177,7 +182,7 @@ func commandMove(cfg *clientData, params ...string) error {
 		cfg.IsWhiteTurn = !cfg.IsWhiteTurn
 	}
 
-	cfg.Pieces = data.Pieces 
+	cfg.Pieces = data.Pieces
 
 	if data.GameOver {
 		return errors.New("game over")
@@ -185,7 +190,7 @@ func commandMove(cfg *clientData, params ...string) error {
 	return nil
 }
 
-func commandHelp(cfg *clientData, params ...string) error{
+func commandHelp(cfg *clientData, params ...string) error {
 	fmt.Print("Usage:\n\n")
 
 	for _, cmd := range getCommands() {
@@ -195,7 +200,7 @@ func commandHelp(cfg *clientData, params ...string) error{
 	return nil
 }
 
-func commandConcede(cfg *clientData, params ...string) error{
+func commandConcede(cfg *clientData, params ...string) error {
 	if cfg.IsWhiteTurn {
 		fmt.Println("White conceded, black wins!")
 	} else {

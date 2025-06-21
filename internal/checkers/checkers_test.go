@@ -1,4 +1,4 @@
-package main
+package checkers
 
 import (
 	"reflect"
@@ -7,70 +7,70 @@ import (
 
 func TestMovePiece(t *testing.T) {
 	tests := []struct {
-		name string
-		row int
-		col int
+		name        string
+		row         int
+		col         int
 		expectedRow int
 		expectedCol int
-		direction moveDir
-		wantErr bool
+		direction   moveDir
+		wantErr     bool
 	}{
 		{
-			name: "Successful move left",
-			row: 5,
-			col: 1,
+			name:        "Successful move left",
+			row:         5,
+			col:         1,
 			expectedRow: 4,
 			expectedCol: 0,
-			direction: moveLeft,
-			wantErr: false,
+			direction:   moveLeft,
+			wantErr:     false,
 		},
 		{
-			name: "Successful move right",
-			row: 5,
-			col: 1,
+			name:        "Successful move right",
+			row:         5,
+			col:         1,
 			expectedRow: 4,
 			expectedCol: 2,
-			direction: moveRight,
-			wantErr: false,
+			direction:   moveRight,
+			wantErr:     false,
 		},
 		{
-			name: "Move out of bounds",
-			row: 5,
-			col: 7,
+			name:      "Move out of bounds",
+			row:       5,
+			col:       7,
 			direction: moveRight,
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
-			name: "Move into occupied space",
-			row: 6,
-			col: 0,
+			name:      "Move into occupied space",
+			row:       6,
+			col:       0,
 			direction: moveRight,
-			wantErr: true,
+			wantErr:   true,
 		},
 		{
-			name: "Attempt to move backwards as not king",
-			row: 6,
-			col: 0,
+			name:      "Attempt to move backwards as not king",
+			row:       6,
+			col:       0,
 			direction: moveBackLeft,
-			wantErr: true,
+			wantErr:   true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T){
-			cfg := startCheckers()
-			err := cfg.movePiece(Move{
-				Row: tt.row,
-				Col: tt.col,
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := StartCheckers()
+			err := cfg.MovePiece(Move{
+				Row:       tt.row,
+				Col:       tt.col,
 				Direction: tt.direction,
-			})
+			}, nil, nil)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("movePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
+				t.Errorf("MovePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
 				return
 			}
 
-			if !tt.wantErr && cfg.Board[tt.expectedRow][tt.expectedCol].Color == ""{
-				t.Errorf("movePiece() did not move piece to expected square: (%v, %v)", tt.expectedRow, tt.expectedCol)
+			if !tt.wantErr && cfg.Board[tt.expectedRow][tt.expectedCol].Color == "" {
+				t.Errorf("MovePiece() did not move piece to expected square: (%v, %v)", tt.expectedRow, tt.expectedCol)
 				return
 			}
 		})
@@ -79,28 +79,28 @@ func TestMovePiece(t *testing.T) {
 
 func TestCapture(t *testing.T) {
 	tests := []struct {
-		name string
-		row int
-		col int
+		name        string
+		row         int
+		col         int
 		expectedRow int
 		expectedCol int
-		direction moveDir
-		wantErr bool
+		direction   moveDir
+		wantErr     bool
 	}{
 		{
-			name: "Successful single capture",
-			row: 4,
-			col: 4,
+			name:        "Successful single capture",
+			row:         4,
+			col:         4,
 			expectedRow: 2,
 			expectedCol: 2,
-			direction: moveLeft,
-			wantErr: false,
+			direction:   moveLeft,
+			wantErr:     false,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func (t *testing.T){
-			cfg := startCheckers()
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := StartCheckers()
 			cfg.Board[4][4] = Piece{
 				Color: pieceWhite,
 			}
@@ -108,18 +108,18 @@ func TestCapture(t *testing.T) {
 				Color: pieceBlack,
 			}
 			cfg.Board[2][2] = Piece{}
-			err := cfg.movePiece(Move{
-				Row: tt.row,
-				Col: tt.col,
+			err := cfg.MovePiece(Move{
+				Row:       tt.row,
+				Col:       tt.col,
 				Direction: tt.direction,
-			})
+			}, nil, nil)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("movePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
+				t.Errorf("MovePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
 			}
 
-			if !tt.wantErr && cfg.Board[tt.expectedRow][tt.expectedCol].Color == ""{
-				t.Errorf("movePiece() did not move piece to expected square: (%v, %v)", tt.expectedRow, tt.expectedCol)
+			if !tt.wantErr && cfg.Board[tt.expectedRow][tt.expectedCol].Color == "" {
+				t.Errorf("MovePiece() did not move piece to expected square: (%v, %v)", tt.expectedRow, tt.expectedCol)
 				return
 			}
 
@@ -130,81 +130,79 @@ func TestCapture(t *testing.T) {
 	}
 }
 func TestCheckSurroundingSquaresForCapture(t *testing.T) {
-    cfg := startCheckers()
+	cfg := StartCheckers()
 	type testPiece struct {
-		row int
-		col int
-		color string
+		row    int
+		col    int
+		color  string
 		isKing bool
 	}
 
 	tests := []struct {
-		name string
-		row int
-		col int
-		pieces []testPiece
-		isWhiteTurn bool
+		name          string
+		row           int
+		col           int
+		pieces        []testPiece
+		isWhiteTurn   bool
 		expectedMoves []string
 	}{
 		{
-			name: "No captures",
-			row: 3,
-			col: 3,
+			name:        "No captures",
+			row:         3,
+			col:         3,
 			isWhiteTurn: true,
 			pieces: []testPiece{
 				{
-					row: 3,
-					col: 3,
+					row:   3,
+					col:   3,
 					color: pieceWhite,
 				},
 			},
 			expectedMoves: []string{},
 		},
 		{
-			name: "Capture to left",
-			row: 3,
-			col: 3,
+			name:        "Capture to left",
+			row:         3,
+			col:         3,
 			isWhiteTurn: true,
 			pieces: []testPiece{
 				{
-					row: 3,
-					col: 3,
+					row:   3,
+					col:   3,
 					color: pieceWhite,
 				},
 				{
-					row: 2,
-					col: 2,
+					row:   2,
+					col:   2,
 					color: pieceBlack,
 				},
 			},
 			expectedMoves: []string{"l"},
-		},{
-			name: "Black king capture to right and back right",
-			row: 3,
-			col: 3,
+		}, {
+			name:        "Black king capture to right and back right",
+			row:         3,
+			col:         3,
 			isWhiteTurn: false,
 			pieces: []testPiece{
 				{
-					row: 3,
-					col: 3,
-					color: pieceBlack,
+					row:    3,
+					col:    3,
+					color:  pieceBlack,
 					isKing: true,
 				},
 				{
-					row: 4,
-					col: 2,
+					row:   4,
+					col:   2,
 					color: pieceWhite,
 				},
 				{
-					row: 2,
-					col: 2,
+					row:   2,
+					col:   2,
 					color: pieceWhite,
 				},
 			},
 			expectedMoves: []string{"r", "br"},
 		},
-		
-		
 	}
 
 	for _, tt := range tests {
@@ -213,7 +211,7 @@ func TestCheckSurroundingSquaresForCapture(t *testing.T) {
 			cfg.IsWhiteTurn = tt.isWhiteTurn
 			for _, piece := range tt.pieces {
 				cfg.Board[piece.row][piece.col] = Piece{
-					Color: piece.color,
+					Color:  piece.color,
 					IsKing: piece.isKing,
 				}
 			}
@@ -222,23 +220,23 @@ func TestCheckSurroundingSquaresForCapture(t *testing.T) {
 				t.Errorf("test checkSurroundingSquaresForCapture() failed. Expected moves: %v   Actual moves: %v", tt.expectedMoves, moves)
 			}
 		})
-	} 
+	}
 }
 
 func TestKing(t *testing.T) {
-	cfg := startCheckers()
+	cfg := StartCheckers()
 	cfg.clearBoard()
 	//initialize white piece one away from becoming king
 	cfg.Board[1][1] = Piece{
-		Color: pieceWhite,
+		Color:  pieceWhite,
 		IsKing: false,
 	}
 
-	cfg.movePiece(Move{
-		Row: 1,
-		Col: 1,
+	cfg.MovePiece(Move{
+		Row:       1,
+		Col:       1,
 		Direction: moveLeft,
-	})
+	}, nil, nil)
 
 	piece := cfg.Board[0][0]
 	if !piece.IsKing {
@@ -247,7 +245,7 @@ func TestKing(t *testing.T) {
 }
 
 /* func TestDoubleCapture(t *testing.T) {
-	cfg := startCheckers()
+	cfg := StartCheckers()
 	cfg.clearBoard()
 	cfg.Board[4][4] = Piece{
 		Color: pieceWhite,
@@ -259,7 +257,7 @@ func TestKing(t *testing.T) {
 		Color: pieceBlack,
 	}
 
-	cfg.movePiece(Move{
+	cfg.MovePiece(Move{
 		Row: 4,
 		Col: 4,
 		Direction: moveLeft,

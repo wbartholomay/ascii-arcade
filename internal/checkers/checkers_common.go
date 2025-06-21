@@ -1,14 +1,13 @@
-package main
+package checkers
 
 import (
 	"fmt"
 )
 
-
 type Piece struct {
-	ID int		   `json:"id"`
-	Color string   `json:"color"`
-	IsKing bool    `json:"is_king"`
+	ID     int    `json:"id"`
+	Color  string `json:"color"`
+	IsKing bool   `json:"is_king"`
 }
 
 type Coords struct {
@@ -20,9 +19,9 @@ const pieceWhite = "w"
 const pieceBlack = "b"
 
 type checkersCfg struct {
-	Board [8][8]Piece
-	Pieces map[int]Coords
-	IsWhiteTurn bool
+	Board           [8][8]Piece
+	Pieces          map[int]Coords
+	IsWhiteTurn     bool
 	WhitePieceCount int
 	BlackPieceCount int
 }
@@ -36,7 +35,7 @@ const (
 	moveBackRight
 )
 
-var movesMap = map[string]moveDir{
+var MovesMap = map[string]moveDir{
 	"l":  moveLeft,
 	"r":  moveRight,
 	"bl": moveBackLeft,
@@ -44,39 +43,31 @@ var movesMap = map[string]moveDir{
 }
 
 type Move struct {
-	Row int
-	Col int
+	Row       int
+	Col       int
 	Direction moveDir
 }
 
-
-// getPlayerColor - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
-func getPlayerColor(cfg interface{}) string {
-    switch v := cfg.(type) {
-    case *checkersCfg:
-        if v.IsWhiteTurn {
-            return pieceWhite
-        }
-    case *clientData:
-        if v.IsWhiteTurn {
-            return pieceWhite
-        }
-    }
-    return pieceBlack
+// GetPlayerColor - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
+func GetPlayerColor(isWhiteTurn bool) string {
+	if isWhiteTurn {
+		return pieceWhite
+	}
+	return pieceBlack
 }
 
-func (cfg *checkersCfg) endTurn() bool {
+func (cfg *checkersCfg) EndTurn() bool {
 	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
-	displayBoard(cfg.Board, cfg.IsWhiteTurn)
+	DisplayBoard(cfg.Board, cfg.IsWhiteTurn)
 	if cfg.WhitePieceCount == 0 {
 		fmt.Println("Black Wins!")
 		return true
-	} else if cfg.BlackPieceCount == 0{
+	} else if cfg.BlackPieceCount == 0 {
 		fmt.Println("White Wins!")
 		return true
 	}
 
-	if cfg.IsWhiteTurn{
+	if cfg.IsWhiteTurn {
 		fmt.Println("White's Turn:")
 	} else {
 		fmt.Println("Black's Turn:")
@@ -89,8 +80,8 @@ func isOutOfBounds(row, col int) bool {
 	return row < 0 || row > 7 || col < 0 || col > 7
 }
 
-func applyDirection(row, col int, direction moveDir) (int, int){
-	switch direction{
+func applyDirection(row, col int, direction moveDir) (int, int) {
+	switch direction {
 	case moveLeft:
 		row -= 1
 		col -= 1
@@ -109,7 +100,7 @@ func applyDirection(row, col int, direction moveDir) (int, int){
 }
 
 func convertDirection(direction moveDir) moveDir {
-	switch direction{
+	switch direction {
 	case moveLeft:
 		return moveBackRight
 	case moveRight:
@@ -126,7 +117,7 @@ func convertDirection(direction moveDir) moveDir {
 func (cfg *checkersCfg) clearBoard() {
 	cfg.Board = [8][8]Piece{}
 }
-func getActualID(color string, id int) int {
+func GetActualID(color string, id int) int {
 	//don't rlly want to throw an error here, the -1 should at least tell me something has gone wrong
 	if id == 0 {
 		return -1

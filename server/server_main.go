@@ -9,8 +9,8 @@ import (
 )
 
 type Game struct {
-	players [2]net.Conn
-	id int
+	players       [2]net.Conn
+	id            int
 	playerOneTurn bool
 }
 
@@ -40,17 +40,16 @@ func handleNewConnection(conn net.Conn) {
 	} else {
 		//passing by reference for now
 		conn.Write([]byte("2"))
-		go startCheckersGame(&Game{
-			players: [2]net.Conn{waiting, conn},
-			id: 0,
+		go StartCheckersGame(&Game{
+			players:       [2]net.Conn{waiting, conn},
+			id:            0,
 			playerOneTurn: true,
 		})
 		waiting = nil
 	}
 }
 
-
-func startCheckersGame(g *Game) {
+func StartCheckersGame(g *Game) {
 	fmt.Println("Game started.")
 	player1, player2 := g.players[0], g.players[1]
 	defer player1.Close()
@@ -64,40 +63,38 @@ func startCheckersGame(g *Game) {
 
 	player1.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	_, err := player1.Write([]byte("game started"))
-	if err != nil{
+	if err != nil {
 		fmt.Println("error sending data to client, aborting game.")
 		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
 	}
 	player2.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	_, err = player2.Write([]byte("game started"))
-	if err != nil{
+	if err != nil {
 		fmt.Println("error sending data to client, aborting game.")
 		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
 	}
 
-
 	for {
-		// inputChan := input1
-		// receivingConn := player2
-		// if !g.playerOneTurn {
-		// 	inputChan = input2
-		// 	receivingConn = player1
-		// }
-		// input := <- inputChan
-		// receivingConn.Write([]byte(input))
-		// g.playerOneTurn = !g.playerOneTurn
+		inputChan := input1
+		receivingConn := player2
+		if !g.playerOneTurn {
+			inputChan = input2
+			receivingConn = player1
+		}
+		input := <-inputChan
+		receivingConn.Write([]byte(input))
+		g.playerOneTurn = !g.playerOneTurn
 	}
-
 
 }
 
 func handleInput(conn net.Conn, ch chan<- string, g *Game, isPlayerOne bool) {
 	scanner := bufio.NewScanner(conn)
-    for scanner.Scan() {
+	for scanner.Scan() {
 		if isPlayerOne != g.playerOneTurn {
 			conn.Write([]byte("Waiting on other player...\n"))
 			continue
 		}
-        ch <- scanner.Text()
-    }
+		ch <- scanner.Text()
+	}
 }

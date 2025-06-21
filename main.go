@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"time"
+
+	"github.com/wbarthol/ascii-arcade/internal/checkers"
 )
 
 type gameType int
@@ -18,25 +20,11 @@ const (
 
 var GameType gameType
 
-type serverToClientData struct {
-	Board [8][8]Piece `json:"board"`
-	Pieces map[int]Coords `json:"pieces"`
-	IsDoubleJump bool  `json:"is_double_jump"`
-	DoubleJumpOptions []string `json:"double_jump_options"`
-	Error error		  `json:"error"`
-	GameOver bool     `json:"game_over"`
-}
-
-type clientToServerData struct {
-	Move Move         `json:"move"`
-	DoubleJumpDirection string `json:"double_jump_direction"`
-}
-
 var (
-	clientToServer chan clientToServerData
-	serverToClient chan serverToClientData
-	serverConn net.Conn
-	playerNumber string
+	clientToServer chan checkers.ClientToServerData
+	serverToClient chan checkers.ServerToClientData
+	serverConn     net.Conn
+	playerNumber   string
 )
 
 const serverURL = "localhost:2000"
@@ -47,7 +35,7 @@ func main() {
 	fmt.Print("Please select a game type:\n1. Online Multiplayer\n2. Local Multiplayer\n3. Local Singleplayer\n4. Exit\nEnter 1, 2, 3, or 4: ")
 	for scanner.Scan() {
 		input := scanner.Text()
-		switch input{
+		switch input {
 		case "1":
 			StartOnlineGame()
 		case "2":
@@ -67,15 +55,15 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
-	
+
 }
 
 func StartLocalGame() {
 	GameType = gameLocal
-	serverToClient = make(chan serverToClientData)
-	clientToServer = make(chan clientToServerData)
+	serverToClient = make(chan checkers.ServerToClientData)
+	clientToServer = make(chan checkers.ClientToServerData)
 	go StartServerRoutine()
-	ClientRoutine()
+	ClientRoutine(serverToClient, clientToServer)
 }
 
 func StartOnlineGame() {
@@ -101,7 +89,7 @@ func StartOnlineGame() {
 		return
 	}
 	playerNumber = string(buf[0])
-	fmt.Printf("You are player %v, waiting to start game...\n",playerNumber)
+	fmt.Printf("You are player %v, waiting to start game...\n", playerNumber)
 	//TODO: add ability for player to exit game while waiting for game to start (without closing program)
 	serverConn.SetReadDeadline(time.Now().Add(1 * time.Minute))
 	n, err := serverConn.Read(buf)
@@ -115,5 +103,5 @@ func StartOnlineGame() {
 	}
 
 	fmt.Println("Opponent found, starting game!")
-	ClientRoutine()
+	ClientRoutine(serverConn, serverConn)
 }

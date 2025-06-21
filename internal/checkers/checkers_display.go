@@ -1,10 +1,10 @@
-package main
+package checkers
 
 import (
 	"fmt"
 )
 
-func displayBoard(board [8][8]Piece, isWhiteTurn bool) {
+func DisplayBoard(board [8][8]Piece, isWhiteTurn bool) {
 
 	rowNum := 0
 	increment := 1
