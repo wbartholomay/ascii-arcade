@@ -81,6 +81,7 @@ func StartOnlineGame() {
 		fmt.Println("Failed to connect to host. Returning to main menu...")
 		return
 	}
+	//TODO: add logic to receive player number from server
 	defer serverConn.Close()
 	ClientRoutine()
 }
