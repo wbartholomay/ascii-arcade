@@ -82,4 +82,5 @@ func StartOnlineGame() {
 		return
 	}
 	defer serverConn.Close()
+	ClientRoutine()
 }

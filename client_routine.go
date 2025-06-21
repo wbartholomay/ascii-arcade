@@ -16,7 +16,11 @@ type clientData struct {
 }
 
 func ClientRoutine() {
-	data := <- serverToClient
+	data, err := WaitForDataFromServer()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	cfg := clientData {
 		Pieces: data.Pieces,
 		//TODO: will need to update this to match some global variable in multiplayer implementation
@@ -116,13 +120,19 @@ func commandMove(cfg *clientData, params ...string) error {
 	}
 
 	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
-	SendDataToServer(clientToServerData{
+	err = SendDataToServer(clientToServerData{
 		Move: move,
 	})
+	if err != nil {
+		return err
+	}
 
 	data := serverToClientData{}
 	for {
-		data = <- serverToClient
+		data, err = WaitForDataFromServer()
+		if err != nil {
+			return err
+		}
 		if data.IsDoubleJump {
 			displayBoard(data.Board, cfg.IsWhiteTurn)
 			fmt.Print("Another capture is available, enter one of the following directions: ")
@@ -142,9 +152,12 @@ func commandMove(cfg *clientData, params ...string) error {
 					break
 				}
 			}
-			SendDataToServer(clientToServerData{
+			err = SendDataToServer(clientToServerData{
 				DoubleJumpDirection: input,
 			})
+			if err != nil {
+				return err
+			}
 		} else {
 			break
 		}
