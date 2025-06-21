@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func commandMove(cfg *checkersCfg, params ...string) error {
+func commandMove(cfg *clientData, params ...string) error {
 	//validate params - expecting move <row> <col> <direction>
 	if len(params) < 2{
 		return errors.New("not enough arguments. Expecting move <piece number> <direction>")
@@ -21,7 +21,7 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		return fmt.Errorf("expected a number, got: %v", params[0])
 	}
 
-	pieceId := getActualID(cfg.getPlayerColor(), int(pieceNum))
+	pieceId := getActualID(getPlayerColor(cfg), int(pieceNum))
 	piece, ok := cfg.Pieces[pieceId]
 	if !ok {
 		return fmt.Errorf("invalid piece number: %v", params[0])
@@ -40,12 +40,20 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 		Direction: direction,
 	}
 
-	if err = cfg.movePiece(move); err != nil {
-		return err
+	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
+	clientToServer <- clientToServerData{
+		Move: move,
 	}
 
-	gameOver := cfg.endTurn()
-	if gameOver {
+	data := <- serverToClient
+
+	if data.Error != nil {
+		return data.Error
+	}
+
+	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
+
+	if data.GameOver {
 		os.Exit(0)
 	}
 	return nil
@@ -56,12 +64,13 @@ func commandMove(cfg *checkersCfg, params ...string) error {
 // validates the move can be made, and if it can the board is updated
 func (cfg *checkersCfg) movePiece(move Move) error{
 	piece := cfg.Board[move.Row][move.Col]
+	playerColor := getPlayerColor(cfg)
 
 	//check selected square
 	if piece.Color == "" {
 		return errors.New("no piece on this square")
 	}
-	if piece.Color != cfg.getPlayerColor() {
+	if piece.Color != playerColor {
 		return errors.New("you can only move your own pieces")
 	}
 	if (move.Direction == moveBackLeft || move.Direction == moveBackRight) && !piece.IsKing {
@@ -81,10 +90,10 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 		return errors.New("cannot move a piece outside of the board")
 	}
 
-	if cfg.Board[targetRow][targetCol].Color == cfg.getPlayerColor() {
+	if cfg.Board[targetRow][targetCol].Color == playerColor {
 		return errors.New("target square is occupied")
 	}
-	if cfg.Board[targetRow][targetCol].Color != cfg.getPlayerColor() && cfg.Board[targetRow][targetCol].Color != ""{
+	if cfg.Board[targetRow][targetCol].Color != playerColor && cfg.Board[targetRow][targetCol].Color != ""{
 		//attempt capture
 		captureRow, captureCol := targetRow, targetCol
 		targetRow, targetCol = applyDirection(targetRow, targetCol, move.Direction)
@@ -98,7 +107,7 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 
 		cfg.Board[captureRow][captureCol] = Piece{}
 		capturedPiece = true
-		if cfg.getPlayerColor() == pieceWhite {
+		if playerColor == pieceWhite {
 			fmt.Println("Captured a black piece!")
 			cfg.BlackPieceCount--
 		} else {
@@ -180,7 +189,7 @@ func (cfg *checkersCfg) checkSurroundingSquaresForCapture(row, col int) []string
 		if isOutOfBounds(targetRow, targetCol) {
 			continue
 		}
-		if cfg.Board[targetRow][targetCol].Color == cfg.getPlayerColor() || cfg.Board[targetRow][targetCol].Color == "" {
+		if cfg.Board[targetRow][targetCol].Color == getPlayerColor(cfg) || cfg.Board[targetRow][targetCol].Color == "" {
 			continue
 		}
 		targetRow, targetCol = applyDirection(targetRow, targetCol, move)

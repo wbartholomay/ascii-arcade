@@ -13,8 +13,8 @@ func startCheckers() checkersCfg {
 	}
 }
 
-func initializeBoard() ([][]Piece, map[int]Coords) {
-	board := make([][]Piece, 8)
+func initializeBoard() ([8][8]Piece, map[int]Coords) {
+	board := [8][8]Piece{}
 	pieces := map[int]Coords{}
 
 	//start white ids at 101, black ids at 201
@@ -22,7 +22,6 @@ func initializeBoard() ([][]Piece, map[int]Coords) {
 	blackPieceID := 201
 	
 	for row := range board {
-		board[row] = make([]Piece, 8)
 		for col := range board[row] {
 			hasPiece := ((row % 2) == 0) == ((col % 2) == 0)
 

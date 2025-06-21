@@ -34,9 +34,11 @@ func main() {
 func handleNewConnection(conn net.Conn) {
 	if waiting == nil {
 		waiting = conn
+		conn.Write([]byte("1"))
 		fmt.Println("Player 1 connected, waiting for Player 2...")
 	} else {
 		//passing by reference for now
+		conn.Write([]byte("2"))
 		go startCheckersGame(&Game{
 			players: [2]net.Conn{waiting, conn},
 			id: 0,

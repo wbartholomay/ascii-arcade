@@ -6,9 +6,9 @@ import (
 
 
 type Piece struct {
-	ID int
-	Color string
-	IsKing bool
+	ID int		   `json:"id"`
+	Color string   `json:"color"`
+	IsKing bool    `json:"is_king"`
 }
 
 type Coords struct {
@@ -20,7 +20,7 @@ const pieceWhite = "w"
 const pieceBlack = "b"
 
 type checkersCfg struct {
-	Board [][]Piece
+	Board [8][8]Piece
 	Pieces map[int]Coords
 	IsWhiteTurn bool
 	WhitePieceCount int
@@ -51,12 +51,18 @@ type Move struct {
 
 
 // getPlayerColor - returns pieceWhite if it is player one's turn, and pieceBlack if it is player 2's turn
-func (cfg *checkersCfg) getPlayerColor() string {
-	if cfg.IsWhiteTurn {
-		return pieceWhite
-	} else {
-		return pieceBlack
-	}
+func getPlayerColor(cfg interface{}) string {
+    switch v := cfg.(type) {
+    case *checkersCfg:
+        if v.IsWhiteTurn {
+            return pieceWhite
+        }
+    case *clientData:
+        if v.IsWhiteTurn {
+            return pieceWhite
+        }
+    }
+    return pieceBlack
 }
 
 func (cfg *checkersCfg) endTurn() bool {
@@ -118,10 +124,7 @@ func convertDirection(direction moveDir) moveDir {
 }
 
 func (cfg *checkersCfg) clearBoard() {
-	cfg.Board = make([][]Piece, 8)
-	for i := range cfg.Board {
-		cfg.Board[i] = make([]Piece, 8)
-	}
+	cfg.Board = [8][8]Piece{}
 }
 func getActualID(color string, id int) int {
 	//don't rlly want to throw an error here, the -1 should at least tell me something has gone wrong

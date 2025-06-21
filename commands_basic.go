@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func commandHelp(cfg *checkersCfg, params ...string) error{
+func commandHelp(cfg *clientData, params ...string) error{
 	fmt.Print("Usage:\n\n")
 
 	for _, cmd := range getCommands() {
@@ -15,12 +15,12 @@ func commandHelp(cfg *checkersCfg, params ...string) error{
 	return nil
 }
 
-func commandBoard(cfg *checkersCfg, params ...string) error{
-	cfg.displayBoard()
-	return nil
-}
+// func commandBoard(params ...string) error{
+// 	cfg.displayBoard()
+// 	return nil
+// }
 
-func commandConcede(cfg *checkersCfg, params ...string) error{
+func commandConcede(cfg *clientData, params ...string) error{
 	if cfg.IsWhiteTurn {
 		fmt.Println("White conceded, black wins!")
 	} else {
