@@ -4,19 +4,19 @@ import (
 	"fmt"
 )
 
-func (cfg *checkersCfg) displayBoard() {
+func displayBoard(board [8][8]Piece, isWhiteTurn bool) {
 
 	rowNum := 0
 	increment := 1
 	checkIndex := func (i int) bool {
-		if cfg.IsWhiteTurn {
+		if isWhiteTurn {
 			return i < 8
 		} else {
 			return i >= 0
 		}
 	}
 
-	if !cfg.IsWhiteTurn {
+	if !isWhiteTurn {
 		rowNum = 7
 		increment = -1
 		fmt.Println("       7       6       5       4       3       2       1       0    ")
@@ -27,7 +27,7 @@ func (cfg *checkersCfg) displayBoard() {
 	for ; checkIndex(rowNum); rowNum += increment{
 		fmt.Println("   —————————————————————————————————————————————————————————————————")
 		squareStr := ""
-		if (rowNum % 2 == 0 && cfg.IsWhiteTurn) || (rowNum % 2 != 0 && !cfg.IsWhiteTurn){
+		if (rowNum % 2 == 0 && isWhiteTurn) || (rowNum % 2 != 0 && !isWhiteTurn){
 			squareStr = "   |       |#######|       |#######|       |#######|       |#######|"
 		} else {
 			squareStr = "   |#######|       |#######|       |#######|       |#######|       |"
@@ -36,12 +36,12 @@ func (cfg *checkersCfg) displayBoard() {
 		rowStr := fmt.Sprintf("%v  |", string(rune('a' + rowNum)))
 
 		colNum := 0
-		if !cfg.IsWhiteTurn {
+		if !isWhiteTurn {
 			colNum = 7
 		}
 
 		for ; checkIndex(colNum); colNum += increment{
-			piece := cfg.Board[rowNum][colNum]
+			piece := board[rowNum][colNum]
 			if (rowNum % 2 == colNum % 2){
 				rowStr += fmt.Sprintf("%v|", piece.renderPiece())
 			} else {

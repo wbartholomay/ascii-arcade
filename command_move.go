@@ -6,59 +6,8 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"strconv"
 	"strings"
 )
-
-func commandMove(cfg *clientData, params ...string) error {
-	//validate params - expecting move <row> <col> <direction>
-	if len(params) < 2{
-		return errors.New("not enough arguments. Expecting move <piece number> <direction>")
-	}
-
-	pieceNum, err := strconv.ParseInt(params[0], 10, 8)
-	if err != nil {
-		return fmt.Errorf("expected a number, got: %v", params[0])
-	}
-
-	pieceId := getActualID(getPlayerColor(cfg), int(pieceNum))
-	piece, ok := cfg.Pieces[pieceId]
-	if !ok {
-		return fmt.Errorf("invalid piece number: %v", params[0])
-	}
-
-	directionString := params[1]
-	direction, ok := movesMap[directionString]
-	if !ok {
-		return errors.New("invalid move direction. Valid moves are 'l', 'r', 'bl', 'br'")
-	}
-
-	
-	move := Move{
-		Row: piece.Row,
-		Col: piece.Col,
-		Direction: direction,
-	}
-
-	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
-	clientToServer <- clientToServerData{
-		Move: move,
-	}
-
-	data := <- serverToClient
-
-	if data.Error != nil {
-		return data.Error
-	}
-
-	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
-
-	if data.GameOver {
-		os.Exit(0)
-	}
-	return nil
-}
-
 
 // movePiece - takes the initial and direction to move piece
 // validates the move can be made, and if it can the board is updated
@@ -105,6 +54,7 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 			return errors.New("target square is occupied")
 		}
 
+		delete(cfg.Pieces, cfg.Board[captureRow][captureCol].ID)
 		cfg.Board[captureRow][captureCol] = Piece{}
 		capturedPiece = true
 		if playerColor == pieceWhite {
@@ -140,7 +90,7 @@ func (cfg *checkersCfg) movePiece(move Move) error{
 			return nil
 		}
 
-		cfg.displayBoard()
+		displayBoard(cfg.Board, cfg.IsWhiteTurn)
 		fmt.Print("Another capture is available, enter one of the following directions: ")
 		for _, moveStr := range nextMoves {
 			fmt.Printf("%v, ", moveStr)

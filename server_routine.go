@@ -8,7 +8,6 @@ func StartServerRoutine() {
 		Error: nil,
 		GameOver: false,
 	}
-	cfg.displayBoard()
 
 	for {
 		data := <- clientToServer
@@ -20,6 +19,7 @@ func StartServerRoutine() {
 
 		serverToClient<- serverToClientData{
 			Board: cfg.Board,
+			Pieces: cfg.Pieces,
 			Error: err,
 			GameOver: gameOver,
 		}
