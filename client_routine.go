@@ -21,10 +21,15 @@ func ClientRoutine() {
 		fmt.Println(err)
 		return
 	}
+
+	whiteTurn := false
+	if playerNumber == "1" {
+		whiteTurn = true
+	}
+
 	cfg := clientData {
 		Pieces: data.Pieces,
-		//TODO: will need to update this to match some global variable in multiplayer implementation
-		IsWhiteTurn: true,
+		IsWhiteTurn: whiteTurn,
 	}
 
 	displayBoard(data.Board, cfg.IsWhiteTurn)
@@ -168,11 +173,14 @@ func commandMove(cfg *clientData, params ...string) error {
 		return data.Error
 	}
 
-	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
+	if GameType != gameOnline {
+		cfg.IsWhiteTurn = !cfg.IsWhiteTurn
+	}
+
 	cfg.Pieces = data.Pieces 
 
 	if data.GameOver {
-		os.Exit(0)
+		return errors.New("game over")
 	}
 	return nil
 }

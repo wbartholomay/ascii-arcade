@@ -21,7 +21,7 @@ func SendDataToServer(data clientToServerData) error{
 		if n < len(rawData) {
 			return errors.New("not all data was sent to server")
 		}
-	} else {
+	} else { 
 		clientToServer <- data
 	}
 	return nil

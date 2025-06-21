@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 type Game struct {
@@ -61,16 +62,30 @@ func startCheckersGame(g *Game) {
 	go handleInput(player1, input1, g, true)
 	go handleInput(player2, input2, g, false)
 
+	player1.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	_, err := player1.Write([]byte("game started"))
+	if err != nil{
+		fmt.Println("error sending data to client, aborting game.")
+		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
+	}
+	player2.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	_, err = player2.Write([]byte("game started"))
+	if err != nil{
+		fmt.Println("error sending data to client, aborting game.")
+		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
+	}
+
+
 	for {
-		inputChan := input1
-		receivingConn := player2
-		if !g.playerOneTurn {
-			inputChan = input2
-			receivingConn = player1
-		}
-		input := <- inputChan
-		receivingConn.Write([]byte(input))
-		g.playerOneTurn = !g.playerOneTurn
+		// inputChan := input1
+		// receivingConn := player2
+		// if !g.playerOneTurn {
+		// 	inputChan = input2
+		// 	receivingConn = player1
+		// }
+		// input := <- inputChan
+		// receivingConn.Write([]byte(input))
+		// g.playerOneTurn = !g.playerOneTurn
 	}
 
 
