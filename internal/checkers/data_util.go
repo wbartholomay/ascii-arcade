@@ -8,6 +8,64 @@ import (
 	"time"
 )
 
+type Transport[SendT any, RcvT any] interface {
+	SendData(SendT) error
+	ReceiveData() (RcvT, error)
+}
+
+type WebTransport[SendT any, RcvT any] struct {
+	Conn net.Conn
+}
+
+func (w *WebTransport[SendT, RcvT]) SendData(T SendT) error {
+	rawData, err := json.Marshal(T)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+		n, err := w.Conn.Write(rawData)
+		if err != nil {
+			return err
+		}
+		if n < len(rawData) {
+			return errors.New("not all data was sent to server")
+		}
+	return nil
+}
+
+func (w *WebTransport[SendT, RcvT]) ReceiveData() (RcvT, error) {
+	//Create 1KB buffer to read from server(could definitely make this smaller, but should not matter)
+	buf := make([]byte, 1024)
+	//timeout after 10 seconds
+	w.Conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	n, err := w.Conn.Read(buf)
+	if err != nil {
+		var x RcvT
+		return x, err
+	}
+	rawData := buf[:n]
+	var data RcvT
+	if err = json.Unmarshal(rawData, &data); err != nil {
+		var x RcvT
+		return x, err
+	}
+	return data, err
+}
+
+type LocalTransport[SendT any, RcvT any] struct {
+	SendChannel chan SendT
+	RcvChannel chan RcvT
+}
+
+func (l *LocalTransport[SendT, RcvT]) SendData(T SendT) error {
+	l.SendChannel <- T
+	return nil
+}
+
+func (l *LocalTransport[SendT, RcvT]) ReceiveData() (RcvT, error) {
+	return <- l.RcvChannel, nil
+}
+
 type ServerToClientData struct {
 	Board             [8][8]Piece    `json:"board"`
 	Pieces            map[int]Coords `json:"pieces"`
@@ -24,7 +82,7 @@ type ClientToServerData struct {
 }
 
 // Send data to server - accepts data and either a network connection or a channel
-func SendDataToServer(data ClientToServerData, channel interface{}) error {
+/* func SendDataToServer(data ClientToServerData, channel interface{}) error {
 	switch c := channel.(type) {
 	case net.Conn:
 		rawData, err := json.Marshal(data)
@@ -121,3 +179,4 @@ func WaitForDataFromClient(channel interface{}) (ClientToServerData, error) {
 		return ClientToServerData{}, errors.New("server not recognized")
 	}
 }
+*/

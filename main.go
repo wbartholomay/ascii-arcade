@@ -63,7 +63,11 @@ func StartLocalGame() {
 	serverToClient = make(chan checkers.ServerToClientData)
 	clientToServer = make(chan checkers.ClientToServerData)
 	go StartServerRoutine()
-	ClientRoutine(serverToClient, clientToServer)
+	transport := checkers.LocalTransport[checkers.ClientToServerData, checkers.ServerToClientData]{
+		SendChannel: clientToServer,
+		RcvChannel: serverToClient,
+	}
+	ClientRoutine(&transport)
 }
 
 func StartOnlineGame() {
@@ -103,5 +107,5 @@ func StartOnlineGame() {
 	}
 
 	fmt.Println("Opponent found, starting game!")
-	ClientRoutine(serverConn, serverConn)
+	ClientRoutine(nil)
 }

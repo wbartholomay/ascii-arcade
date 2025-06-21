@@ -63,7 +63,7 @@ func TestMovePiece(t *testing.T) {
 				Row:       tt.row,
 				Col:       tt.col,
 				Direction: tt.direction,
-			}, nil, nil)
+			}, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MovePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
 				return
@@ -112,7 +112,7 @@ func TestCapture(t *testing.T) {
 				Row:       tt.row,
 				Col:       tt.col,
 				Direction: tt.direction,
-			}, nil, nil)
+			}, nil)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MovePiece() error = %v, wantErr %v. Starting square = (%v, %v), move direction = %v", err, tt.wantErr, tt.row, tt.col, tt.direction)
@@ -236,7 +236,7 @@ func TestKing(t *testing.T) {
 		Row:       1,
 		Col:       1,
 		Direction: moveLeft,
-	}, nil, nil)
+	}, nil)
 
 	piece := cfg.Board[0][0]
 	if !piece.IsKing {

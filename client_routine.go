@@ -15,13 +15,11 @@ import (
 type clientData struct {
 	Pieces             map[int]checkers.Coords
 	IsWhiteTurn        bool
-	ClientToServerConn interface{}
-	ServerToClientConn interface{}
 }
 
-func ClientRoutine(serverToClientConn interface{}, clientToServerConn interface{}) {
+func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData]) {
 	//TODO: TIMING OUT HERE. NEED TO CONFIGURE SENDING DATA FROM THE SERVER TO THIS POINT.
-	data, err := checkers.WaitForDataFromServer(serverToClientConn)
+	data, err := transport.ReceiveData()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -35,8 +33,6 @@ func ClientRoutine(serverToClientConn interface{}, clientToServerConn interface{
 	cfg := clientData{
 		Pieces:             data.Pieces,
 		IsWhiteTurn:        whiteTurn,
-		ClientToServerConn: clientToServerConn,
-		ServerToClientConn: serverToClientConn,
 	}
 
 	checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
@@ -58,7 +54,7 @@ func ClientRoutine(serverToClientConn interface{}, clientToServerConn interface{
 			continue
 		}
 
-		err := cmd.callback(&cfg, input[1:]...)
+		err := cmd.callback(&cfg, transport, input[1:]...)
 		//using this error to pass game over state, might need to
 		if err != nil {
 			if err.Error() == "game over" {
@@ -72,7 +68,9 @@ func ClientRoutine(serverToClientConn interface{}, clientToServerConn interface{
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(cfg *clientData, params ...string) error
+	callback    func(cfg *clientData, 
+		transport checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData],
+		 params ...string) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -101,7 +99,9 @@ func cleanInput(text string) []string {
 	return substrings
 }
 
-func commandMove(cfg *clientData, params ...string) error {
+func commandMove(cfg *clientData, 
+	T checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData], 
+	params ...string) error {
 	//validate params - expecting move <row> <col> <direction>
 	if len(params) < 2 {
 		return errors.New("not enough arguments. Expecting move <piece number> <direction>")
@@ -131,16 +131,16 @@ func commandMove(cfg *clientData, params ...string) error {
 	}
 
 	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
-	err = checkers.SendDataToServer(checkers.ClientToServerData{
+	err = T.SendData(checkers.ClientToServerData{
 		Move: move,
-	},cfg.ClientToServerConn)
+	})
 	if err != nil {
 		return err
 	}
 
 	data := checkers.ServerToClientData{}
 	for {
-		data, err = checkers.WaitForDataFromServer(cfg.ServerToClientConn)
+		data, err = T.ReceiveData()
 		if err != nil {
 			return err
 		}
@@ -163,9 +163,9 @@ func commandMove(cfg *clientData, params ...string) error {
 					break
 				}
 			}
-			err = checkers.SendDataToServer(checkers.ClientToServerData{
+			err = T.SendData(checkers.ClientToServerData{
 				DoubleJumpDirection: input,
-			}, cfg.ClientToServerConn)
+			})
 			if err != nil {
 				return err
 			}
@@ -190,7 +190,9 @@ func commandMove(cfg *clientData, params ...string) error {
 	return nil
 }
 
-func commandHelp(cfg *clientData, params ...string) error {
+func commandHelp(cfg *clientData,
+	T checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData],
+	 params ...string) error {
 	fmt.Print("Usage:\n\n")
 
 	for _, cmd := range getCommands() {
@@ -200,7 +202,9 @@ func commandHelp(cfg *clientData, params ...string) error {
 	return nil
 }
 
-func commandConcede(cfg *clientData, params ...string) error {
+func commandConcede(cfg *clientData,
+	T checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData],
+	params ...string) error {
 	if cfg.IsWhiteTurn {
 		fmt.Println("White conceded, black wins!")
 	} else {

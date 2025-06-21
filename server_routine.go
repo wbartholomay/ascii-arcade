@@ -6,16 +6,20 @@ import (
 
 func StartServerRoutine() {
 	cfg := checkers.StartCheckers()
-	serverToClient <- checkers.ServerToClientData{
+	transport := checkers.LocalTransport[checkers.ServerToClientData, checkers.ClientToServerData]{
+		SendChannel: serverToClient,
+		RcvChannel: clientToServer,
+	}
+	transport.SendData(checkers.ServerToClientData{
 		Board:    cfg.Board,
 		Pieces:   cfg.Pieces,
 		Error:    nil,
 		GameOver: false,
-	}
+	})
 
 	for {
 		data := <-clientToServer
-		err := cfg.MovePiece(data.Move, serverToClient, clientToServer)
+		err := cfg.MovePiece(data.Move, &transport)
 		gameOver := false
 		if err == nil {
 			gameOver = cfg.EndTurn()

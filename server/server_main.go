@@ -61,8 +61,11 @@ func StartCheckersGame(g *Game) {
 	go handleInput(player1, input1, g, true)
 	go handleInput(player2, input2, g, false)
 
+	fmt.Println("Sending start signal")
+	time.Sleep(2 * time.Second)
 	player1.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	_, err := player1.Write([]byte("game started"))
+	fmt.Println("Sent start signal")
 	if err != nil {
 		fmt.Println("error sending data to client, aborting game.")
 		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted

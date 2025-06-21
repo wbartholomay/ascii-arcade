@@ -8,7 +8,8 @@ import (
 // MovePiece - takes the initial and direction to move piece
 // validates the move can be made, and if it can the board is updated
 // takes in argument move and either a channel or a connection
-func (cfg *checkersCfg) MovePiece(move Move, serverToClientConn interface{}, clientToServerConn interface{}) error {
+func (cfg *checkersCfg) MovePiece(move Move, 
+	transport Transport[ServerToClientData, ClientToServerData]) error {
 	piece := cfg.Board[move.Row][move.Col]
 	playerColor := GetPlayerColor(cfg.IsWhiteTurn)
 
@@ -93,17 +94,17 @@ func (cfg *checkersCfg) MovePiece(move Move, serverToClientConn interface{}, cli
 			fmt.Printf("%v, ", moveStr)
 		}
 		fmt.Println()
-		err := SendDataToClient(ServerToClientData{
+		err := transport.SendData(ServerToClientData{
 			Board:             cfg.Board,
 			Pieces:            cfg.Pieces,
 			IsDoubleJump:      true,
 			DoubleJumpOptions: nextMoves,
-		}, serverToClientConn)
+		})
 		if err != nil {
 			return err
 		}
 
-		dataFromClient, err := WaitForDataFromClient(clientToServerConn)
+		dataFromClient, err := transport.ReceiveData()
 		if err != nil {
 			return err
 		}
@@ -112,7 +113,7 @@ func (cfg *checkersCfg) MovePiece(move Move, serverToClientConn interface{}, cli
 			Row:       targetRow,
 			Col:       targetCol,
 			Direction: MovesMap[dataFromClient.DoubleJumpDirection],
-		}, serverToClientConn, clientToServerConn)
+		}, transport)
 	}
 
 	return nil
