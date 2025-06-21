@@ -82,6 +82,15 @@ func StartOnlineGame() {
 		return
 	}
 	//TODO: add logic to receive player number from server
+	buf := make([]byte, 1)
+	_, err = serverConn.Read(buf)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	playerNum := string(buf[1])
+	//SET PLAYER NUMBER IN GLOBAL SCOPE
+	fmt.Println(playerNum)
 	defer serverConn.Close()
 	ClientRoutine()
 }
