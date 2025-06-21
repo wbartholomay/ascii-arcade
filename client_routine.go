@@ -19,7 +19,7 @@ type clientData struct {
 
 func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData]) {
 	//TODO: TIMING OUT HERE. NEED TO CONFIGURE SENDING DATA FROM THE SERVER TO THIS POINT.
-	data, err := transport.ReceiveData()
+	data, err := transport.ReceiveData(0)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -133,14 +133,14 @@ func commandMove(cfg *clientData,
 	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
 	err = T.SendData(checkers.ClientToServerData{
 		Move: move,
-	})
+	}, 10)
 	if err != nil {
 		return err
 	}
 
 	data := checkers.ServerToClientData{}
 	for {
-		data, err = T.ReceiveData()
+		data, err = T.ReceiveData(10)
 		if err != nil {
 			return err
 		}
@@ -165,7 +165,7 @@ func commandMove(cfg *clientData,
 			}
 			err = T.SendData(checkers.ClientToServerData{
 				DoubleJumpDirection: input,
-			})
+			}, 10)
 			if err != nil {
 				return err
 			}

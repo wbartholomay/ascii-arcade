@@ -15,7 +15,7 @@ func StartServerRoutine() {
 		Pieces:   cfg.Pieces,
 		Error:    nil,
 		GameOver: false,
-	})
+	}, 10)
 
 	for {
 		data := <-clientToServer

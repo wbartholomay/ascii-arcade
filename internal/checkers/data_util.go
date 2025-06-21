@@ -3,26 +3,29 @@ package checkers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
 )
 
 type Transport[SendT any, RcvT any] interface {
-	SendData(SendT) error
-	ReceiveData() (RcvT, error)
+	SendData(SendT, time.Duration) error
+	ReceiveData(time.Duration) (RcvT, error)
 }
 
 type WebTransport[SendT any, RcvT any] struct {
 	Conn net.Conn
 }
 
-func (w *WebTransport[SendT, RcvT]) SendData(T SendT) error {
+func (w *WebTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error {
 	rawData, err := json.Marshal(T)
 		if err != nil {
 			log.Fatal(err)
 		}
-		w.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+		if dur != 0{
+			w.Conn.SetWriteDeadline(time.Now().Add(dur * time.Second))
+		}
 		n, err := w.Conn.Write(rawData)
 		if err != nil {
 			return err
@@ -33,22 +36,26 @@ func (w *WebTransport[SendT, RcvT]) SendData(T SendT) error {
 	return nil
 }
 
-func (w *WebTransport[SendT, RcvT]) ReceiveData() (RcvT, error) {
+func (w *WebTransport[SendT, RcvT]) ReceiveData(dur time.Duration) (RcvT, error) {
 	//Create 1KB buffer to read from server(could definitely make this smaller, but should not matter)
-	buf := make([]byte, 1024)
-	//timeout after 10 seconds
-	w.Conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	n, err := w.Conn.Read(buf)
+	// buf := make([]byte, 1024)
+	if dur != 0 {
+		w.Conn.SetReadDeadline(time.Now().Add(dur * time.Second))
+	}
+	decoder := json.NewDecoder(w.Conn)
+	var data RcvT
+	err := decoder.Decode(&data)
+	// n, err := w.Conn.Read(buf)
 	if err != nil {
 		var x RcvT
-		return x, err
+		return x, fmt.Errorf("error reading data from connection: %w", err)
 	}
-	rawData := buf[:n]
-	var data RcvT
-	if err = json.Unmarshal(rawData, &data); err != nil {
-		var x RcvT
-		return x, err
-	}
+	// rawData := buf[:n]
+	// var data RcvT
+	// if err = json.Unmarshal(rawData, &data); err != nil {
+	// 	var x RcvT
+	// 	return x, fmt.Errorf("error unmarshaling the json: %w", err)
+	// }
 	return data, err
 }
 
@@ -57,12 +64,12 @@ type LocalTransport[SendT any, RcvT any] struct {
 	RcvChannel chan RcvT
 }
 
-func (l *LocalTransport[SendT, RcvT]) SendData(T SendT) error {
+func (l *LocalTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error {
 	l.SendChannel <- T
 	return nil
 }
 
-func (l *LocalTransport[SendT, RcvT]) ReceiveData() (RcvT, error) {
+func (l *LocalTransport[SendT, RcvT]) ReceiveData(dur time.Duration) (RcvT, error) {
 	return <- l.RcvChannel, nil
 }
 

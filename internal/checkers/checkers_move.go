@@ -99,12 +99,12 @@ func (cfg *checkersCfg) MovePiece(move Move,
 			Pieces:            cfg.Pieces,
 			IsDoubleJump:      true,
 			DoubleJumpOptions: nextMoves,
-		})
+		}, 10)
 		if err != nil {
 			return err
 		}
 
-		dataFromClient, err := transport.ReceiveData()
+		dataFromClient, err := transport.ReceiveData(10)
 		if err != nil {
 			return err
 		}

@@ -20,6 +20,7 @@ const (
 
 var GameType gameType
 
+//definitely overusing global scope, should remove these
 var (
 	clientToServer chan checkers.ClientToServerData
 	serverToClient chan checkers.ServerToClientData
