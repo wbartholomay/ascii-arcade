@@ -1,5 +1,12 @@
 package main
 
+import (
+	"bufio"
+	"fmt"
+	"net"
+	"os"
+)
+
 type gameType int
 
 const (
@@ -25,25 +32,54 @@ type clientToServerData struct {
 }
 
 var (
-	clientToServer = make(chan clientToServerData)
-	serverToClient = make(chan serverToClientData)
+	clientToServer chan clientToServerData
+	serverToClient chan serverToClientData
+	serverConn net.Conn
 )
 
-func main() {
-	// fmt.Println("Connecting to server...")
-	// conn, err := net.Dial("tcp", "localhost:2000")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer conn.Close()
-	// // StartCheckersRepl()
+const serverURL = "localhost:2000"
 
+func main() {
+	fmt.Println("Welcome to checkers!")
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print("Please select a game type:\n1. Online Multiplayer\n2. Local Multiplayer\n3. Local Singleplayer\nEnter 1, 2, or 3: ")
+	for scanner.Scan() {
+		input := scanner.Text()
+		switch input{
+		case "1":
+			StartOnlineGame()
+		case "2":
+			StartLocalGame()
+		case "3":
+			GameType = gameSingle
+		default:
+			fmt.Print("Invalid input.")
+		}
+		fmt.Print("Please select a game type:\n1. Online Multiplayer\n2. Local Multiplayer\n3. Local Singleplayer\nEnter 1, 2, or 3: ")
+	}
 	// buf := make([]byte, 1)
 	// _, err = conn.Read(buf)
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
+	
+}
+
+func StartLocalGame() {
 	GameType = gameLocal
+	serverToClient = make(chan serverToClientData)
+	clientToServer = make(chan clientToServerData)
 	go StartServerRoutine()
 	ClientRoutine()
+}
+
+func StartOnlineGame() {
+	GameType = gameOnline
+	fmt.Println("Connecting to server...")
+	serverConn, err := net.Dial("tcp", serverURL)
+	if err != nil {
+		fmt.Println("Failed to connect to host. Returning to main menu...")
+		return
+	}
+	defer serverConn.Close()
 }

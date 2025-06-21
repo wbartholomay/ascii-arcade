@@ -42,13 +42,12 @@ func ClientRoutine() {
 			continue
 		}
 
-		//exit checkers game
-		if cmd.name == "exit" {
-			break
-		}
-
 		err := cmd.callback(&cfg, input[1:]...)
+		//using this error to pass game over state, might need to
 		if err != nil {
+			if err.Error() == "game over" {
+				break
+			}
 			fmt.Println(err.Error())
 		}
 	}
@@ -163,4 +162,24 @@ func commandMove(cfg *clientData, params ...string) error {
 		os.Exit(0)
 	}
 	return nil
+}
+
+func commandHelp(cfg *clientData, params ...string) error{
+	fmt.Print("Usage:\n\n")
+
+	for _, cmd := range getCommands() {
+		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
+	}
+
+	return nil
+}
+
+func commandConcede(cfg *clientData, params ...string) error{
+	if cfg.IsWhiteTurn {
+		fmt.Println("White conceded, black wins!")
+	} else {
+		fmt.Println("Black conceded, white wins!")
+	}
+
+	return errors.New("game over")
 }
