@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/wbarthol/ascii-arcade/internal/checkers"
 )
 
@@ -18,18 +20,31 @@ func StartServerRoutine() {
 	}, 10)
 
 	for {
-		data := <-clientToServer
-		err := cfg.MovePiece(data.Move, &transport)
-		gameOver := false
-		if err == nil {
-			gameOver = cfg.EndTurn()
-		}
+		//inner for loop to continue requesting moves from the client until no more double jumps are available
+		for {
+			data, _ := transport.ReceiveData(0)
+			nextMoves, pieceCoords, err := cfg.MovePiece(data.Move, &transport)
+			hasDoubleJump := len(nextMoves) > 0
+			gameOver := false
+			if err == nil && !hasDoubleJump{
+				gameOver = cfg.EndTurn()
+			}
 
-		serverToClient <- checkers.ServerToClientData{
-			Board:    cfg.Board,
-			Pieces:   cfg.Pieces,
-			Error:    err,
-			GameOver: gameOver,
-		}
+			err = transport.SendData(checkers.ServerToClientData{
+				Board:    cfg.Board,
+				Pieces:   cfg.Pieces,
+				Error:    err,
+				GameOver: gameOver,
+				IsDoubleJump: hasDoubleJump,
+				DoubleJumpOptions: nextMoves,
+				PieceCoords: pieceCoords,
+			}, 0)
+			if err != nil {
+				fmt.Println(err)
+			}
+			if len(nextMoves) == 0 {
+				break
+			}
+			}
 	}
 }

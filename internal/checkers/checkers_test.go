@@ -59,7 +59,7 @@ func TestMovePiece(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := StartCheckers()
-			err := cfg.MovePiece(Move{
+			_, _, err := cfg.MovePiece(Move{
 				Row:       tt.row,
 				Col:       tt.col,
 				Direction: tt.direction,
@@ -108,7 +108,7 @@ func TestCapture(t *testing.T) {
 				Color: pieceBlack,
 			}
 			cfg.Board[2][2] = Piece{}
-			err := cfg.MovePiece(Move{
+			_, _, err := cfg.MovePiece(Move{
 				Row:       tt.row,
 				Col:       tt.col,
 				Direction: tt.direction,

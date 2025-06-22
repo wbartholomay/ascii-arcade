@@ -25,43 +25,48 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 		fmt.Println("Waiting for player 1 to make their move...")
 	}
 	fmt.Println()
-	data, err := transport.ReceiveData(0)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
-	cfg := clientData{
-		Pieces:             data.Pieces,
-		IsWhiteTurn:        whiteTurn,
-	}
 
-	checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
-
-	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("Checkers > ")
-		scanner.Scan()
-
-		t := scanner.Text()
-		input := cleanInput(t)
-		if len(input) == 0 {
-			continue
-		}
-
-		cmd, ok := getCommands()[input[0]]
-		if !ok {
-			fmt.Println("Unknown command. Enter 'help' to see a list of commands.")
-			continue
-		}
-
-		err := cmd.callback(&cfg, transport, input[1:]...)
-		//using this error to pass game over state, might need to
+		data, err := transport.ReceiveData(0)
 		if err != nil {
-			if err.Error() == "game over" {
-				break
+			fmt.Println(err)
+			return
+		}
+
+		cfg := clientData{
+			Pieces:             data.Pieces,
+			IsWhiteTurn:        whiteTurn,
+		}
+
+		checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
+
+		scanner := bufio.NewScanner(os.Stdin)
+		for {
+			fmt.Print("Checkers > ")
+			scanner.Scan()
+
+			t := scanner.Text()
+			input := cleanInput(t)
+			if len(input) == 0 {
+				continue
 			}
-			fmt.Println(err.Error())
+
+			cmd, ok := getCommands()[input[0]]
+			if !ok {
+				fmt.Println("Unknown command. Enter 'help' to see a list of commands.")
+				continue
+			}
+
+			err := cmd.callback(&cfg, transport, input[1:]...)
+			//using this error to pass game over state, might need to update that
+			if err != nil {
+				if err.Error() == "game over" {
+					break
+				}
+				fmt.Println(err.Error())
+				continue
+			}
 		}
 	}
 }
@@ -165,7 +170,11 @@ func commandMove(cfg *clientData,
 				}
 			}
 			err = T.SendData(checkers.ClientToServerData{
-				DoubleJumpDirection: input,
+				Move: checkers.Move{
+					Row: data.PieceCoords[0],
+					Col: data.PieceCoords[1],
+					Direction: checkers.MovesMap[input],
+				},
 			}, 10)
 			if err != nil {
 				return err

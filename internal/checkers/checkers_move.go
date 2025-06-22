@@ -8,20 +8,21 @@ import (
 // MovePiece - takes the initial and direction to move piece
 // validates the move can be made, and if it can the board is updated
 // takes in argument move and either a channel or a connection
+// returns a slice of strings, which contain possible moves for a double jump
 func (cfg *checkersCfg) MovePiece(move Move, 
-	transport Transport[ServerToClientData, ClientToServerData]) error {
+	transport Transport[ServerToClientData, ClientToServerData]) ([]string, [2] int, error) {
 	piece := cfg.Board[move.Row][move.Col]
 	playerColor := GetPlayerColor(cfg.IsWhiteTurn)
 
 	//check selected square
 	if piece.Color == "" {
-		return errors.New("no piece on this square")
+		return []string{}, [2]int{}, errors.New("no piece on this square")
 	}
 	if piece.Color != playerColor {
-		return errors.New("you can only move your own pieces")
+		return []string{}, [2]int{}, errors.New("you can only move your own pieces")
 	}
 	if (move.Direction == moveBackLeft || move.Direction == moveBackRight) && !piece.IsKing {
-		return errors.New("only kings can move backwards")
+		return []string{}, [2]int{}, errors.New("only kings can move backwards")
 	}
 
 	//get absolute direction based on the input direction and the piece color
@@ -34,22 +35,22 @@ func (cfg *checkersCfg) MovePiece(move Move,
 	capturedPiece := false
 
 	if isOutOfBounds(targetRow, targetCol) {
-		return errors.New("cannot move a piece outside of the board")
+		return []string{}, [2]int{}, errors.New("cannot move a piece outside of the board")
 	}
 
 	if cfg.Board[targetRow][targetCol].Color == playerColor {
-		return errors.New("target square is occupied")
+		return []string{}, [2]int{}, errors.New("target square is occupied")
 	}
 	if cfg.Board[targetRow][targetCol].Color != playerColor && cfg.Board[targetRow][targetCol].Color != "" {
 		//attempt capture
 		captureRow, captureCol := targetRow, targetCol
 		targetRow, targetCol = applyDirection(targetRow, targetCol, move.Direction)
 		if isOutOfBounds(targetRow, targetCol) {
-			return errors.New("cannot move a piece outside of the board")
+			return []string{}, [2]int{}, errors.New("cannot move a piece outside of the board")
 		}
 
 		if cfg.Board[targetRow][targetCol].Color != "" {
-			return errors.New("target square is occupied")
+			return []string{}, [2]int{}, errors.New("target square is occupied")
 		}
 
 		delete(cfg.Pieces, cfg.Board[captureRow][captureCol].ID)
@@ -78,45 +79,41 @@ func (cfg *checkersCfg) MovePiece(move Move,
 		cfg.Board[targetRow][targetCol].IsKing = true
 	}
 	if !capturedPiece {
-		return nil
+		return []string{}, [2]int{}, nil
 	}
 
 	//check for double capture
 	if capturedPiece {
-		nextMoves := cfg.checkSurroundingSquaresForCapture(targetRow, targetCol)
-		if len(nextMoves) == 0 {
-			return nil
-		}
+		return cfg.checkSurroundingSquaresForCapture(targetRow, targetCol), [2]int{targetRow, targetCol}, nil
 
-		DisplayBoard(cfg.Board, cfg.IsWhiteTurn)
-		fmt.Print("Another capture is available, enter one of the following directions: ")
-		for _, moveStr := range nextMoves {
-			fmt.Printf("%v, ", moveStr)
-		}
-		fmt.Println()
-		err := transport.SendData(ServerToClientData{
-			Board:             cfg.Board,
-			Pieces:            cfg.Pieces,
-			IsDoubleJump:      true,
-			DoubleJumpOptions: nextMoves,
-		}, 10)
-		if err != nil {
-			return err
-		}
+		// DisplayBoard(cfg.Board, cfg.IsWhiteTurn)
+		// fmt.Print("Another capture is available, enter one of the following directions: ")
+		// for _, moveStr := range nextMoves {
+		// 	fmt.Printf("%v, ", moveStr)
+		// }
+		// fmt.Println()
+		// err := transport.SendData(ServerToClientData{
+		// 	Board:             cfg.Board,
+		// 	Pieces:            cfg.Pieces,
+		// 	IsDoubleJump:      true,
+		// 	DoubleJumpOptions: nextMoves,
+		// }, 10)
+		// if err != nil {
+		// 	return err
+		// }
 
-		dataFromClient, err := transport.ReceiveData(10)
-		if err != nil {
-			return err
-		}
+		// dataFromClient, err := transport.ReceiveData(10)
+		// if err != nil {
+		// 	return err
+		// }
 
-		return cfg.MovePiece(Move{
-			Row:       targetRow,
-			Col:       targetCol,
-			Direction: MovesMap[dataFromClient.DoubleJumpDirection],
-		}, transport)
+		// return cfg.MovePiece(Move{
+		// 	Row:       targetRow,
+		// 	Col:       targetCol,
+		// 	Direction: MovesMap[dataFromClient.DoubleJumpDirection],
+		// }, transport)
 	}
-
-	return nil
+	return []string{},[2]int{}, nil
 }
 
 func (cfg *checkersCfg) checkSurroundingSquaresForCapture(row, col int) []string {

@@ -78,6 +78,7 @@ type ServerToClientData struct {
 	Pieces            map[int]Coords `json:"pieces"`
 	IsDoubleJump      bool           `json:"is_double_jump"`
 	DoubleJumpOptions []string       `json:"double_jump_options"`
+	PieceCoords       [2]int         `json:"piece_coords"`
 	Error             error          `json:"error"`
 	GameOver          bool           `json:"game_over"`
 	NotPlayerTurn     bool           `json:"not_player_turn"`

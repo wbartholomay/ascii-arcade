@@ -85,28 +85,47 @@ func StartCheckersGame(g *Game) {
 		fmt.Println(err)
 	}
 
-	for {
-		err = currentConn.SendData(checkers.ServerToClientData{
-			Board:    cfg.Board,
-			Pieces:   cfg.Pieces,
-			Error:    nil,
-			GameOver: false,
-		}, 10)
-		if err != nil {
-			fmt.Println(err)
-		}
-		data, err := currentConn.ReceiveData(0)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if err = cfg.MovePiece(data.Move, currentConn); err != nil{
-			fmt.Println(err)
-		}
+	err = currentConn.SendData(checkers.ServerToClientData{
+		Board:    cfg.Board,
+		Pieces:   cfg.Pieces,
+		Error:    nil,
+		GameOver: false,
+	}, 10)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-		if currentConn == &connPlayerOne{
-			currentConn = &connPlayerTwo
-		} else {
-			currentConn = &connPlayerOne
+	for {
+		for {
+			data, _ := currentConn.ReceiveData(0)
+			nextMoves, pieceCoords, err := cfg.MovePiece(data.Move, currentConn)
+			hasDoubleJump := len(nextMoves) > 0
+			gameOver := false
+			if err == nil && !hasDoubleJump{
+				gameOver = cfg.EndTurn()
+			}
+
+			if currentConn == &connPlayerOne {
+				currentConn = &connPlayerTwo
+			} else {
+				currentConn = &connPlayerOne
+			}
+
+			err = currentConn.SendData(checkers.ServerToClientData{
+				Board:    cfg.Board,
+				Pieces:   cfg.Pieces,
+				Error:    err,
+				GameOver: gameOver,
+				IsDoubleJump: hasDoubleJump,
+				DoubleJumpOptions: nextMoves,
+				PieceCoords: pieceCoords,
+			}, 0)
+			if err != nil {
+				fmt.Println(err)
+			}
+			if len(nextMoves) == 0 {
+				break
+			}
 		}
 	}
 
