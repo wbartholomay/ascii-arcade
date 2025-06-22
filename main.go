@@ -3,10 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net"
 	"os"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/wbarthol/ascii-arcade/internal/checkers"
 )
 
@@ -24,11 +24,11 @@ var GameType gameType
 var (
 	clientToServer chan checkers.ClientToServerData
 	serverToClient chan checkers.ServerToClientData
-	serverConn     net.Conn
 	playerNumber   string
 )
 
-const serverURL = "localhost:2000"
+//TODO: set this as environment variable
+const serverURL = "localhost:2000/ws"
 
 func main() {
 	fmt.Println("Welcome to checkers!")
@@ -43,6 +43,7 @@ func main() {
 			StartLocalGame()
 		case "3":
 			GameType = gameSingle
+			fmt.Println("Local singleplayer coming soon!")
 		case "4":
 			fmt.Println("See ya later!")
 			os.Exit(0)
@@ -71,7 +72,7 @@ func StartOnlineGame() {
 
 	//this local serverConn is overwriting global server conn when using := operator
 	var err error
-	serverConn, err = net.Dial("tcp", serverURL)
+	serverConn, _, err := websocket.DefaultDialer.Dial("ws://"+serverURL, nil)
 	if err != nil {
 		fmt.Println("Failed to connect to host. Returning to main menu...")
 		return
@@ -83,23 +84,32 @@ func StartOnlineGame() {
 		Conn: serverConn,
 	}
 
-	buf := make([]byte, 1024)
+	type playerNum struct {
+		PlayerNumber string `json:"player_number"`
+	}
+	var buf playerNum
 	serverConn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	_, err = serverConn.Read(buf)
+	err = serverConn.ReadJSON(&buf)
 	if err != nil {
 		fmt.Println(err)
+		fmt.Println("Failed to connect to host. Returning to main menu...")
 		return
 	}
-	playerNumber = string(buf[0])
+	playerNumber = buf.PlayerNumber
 	fmt.Printf("You are player %v, waiting to start game...\n", playerNumber)
 	//TODO: add ability for player to exit game while waiting for game to start (without closing program)
+	type gameStart struct {
+		GameStart bool `json:"game_start"`
+	}
+	var g gameStart
 	serverConn.SetReadDeadline(time.Now().Add(1 * time.Minute))
-	n, err := serverConn.Read(buf)
+	err = serverConn.ReadJSON(&g)
 	if err != nil {
 		fmt.Println(err)
+		fmt.Println("Received unexpected message from server, closing game.")
 		return
 	}
-	if string(buf[:n]) != "game started" {
+	if !g.GameStart {
 		fmt.Println("Received unexpected message from server, closing game.")
 		return
 	}

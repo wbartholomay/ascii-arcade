@@ -3,46 +3,71 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
+	"net/http"
+	"os"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/wbarthol/ascii-arcade/internal/checkers"
 )
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
+
 type Game struct {
-	players       [2]net.Conn
+	players       [2]*websocket.Conn
 	id            int
 	playerOneTurn bool
 }
 
-var waiting net.Conn
+var waiting *websocket.Conn
 
 func main() {
-	l, err := net.Listen("tcp", ":2000")
-	if err != nil {
-		log.Fatal(err)
-	}
+	http.HandleFunc("/ws", handleWSConnection)
 
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			fmt.Printf("Accept error: %v", err)
-			continue
-		}
-		go handleNewConnection(conn)
+	fmt.Println("Server starting on :2000...")
+	if err := http.ListenAndServe(":2000", nil); err != nil {
+		log.Fatal(err)
 	}
 }
 
-func handleNewConnection(conn net.Conn) {
+func handleWSConnection(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("Websocket upgrade error: %v", err)
+		return
+	}
+	
+	handleNewConnection(conn)
+}
+
+func handleNewConnection(conn *websocket.Conn) {
+	type playerNum struct {
+		PlayerNumber string `json:"player_number"`
+	}
 	if waiting == nil {
 		waiting = conn
-		conn.Write([]byte("1"))
+		err := conn.WriteJSON(playerNum{
+			PlayerNumber: "1",
+		})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		fmt.Println("Player 1 connected, waiting for Player 2...")
 	} else {
-		//passing by reference for now
-		conn.Write([]byte("2"))
+		err := conn.WriteJSON(playerNum{
+			PlayerNumber: "2",
+		})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		go StartCheckersGame(&Game{
-			players:       [2]net.Conn{waiting, conn},
+			players:       [2]*websocket.Conn{waiting, conn},
 			id:            0,
 			playerOneTurn: true,
 		})
@@ -57,17 +82,26 @@ func StartCheckersGame(g *Game) {
 	defer player2.Close()
 
 	//signal to clients that the game has started
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
+	type gameStart struct {
+		GameStart bool `json:"game_start"`
+	}
 	player1.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_, err := player1.Write([]byte("game started"))
+	err := player1.WriteJSON(gameStart{
+		GameStart: true,
+	})
 	if err != nil {
 		fmt.Println("error sending data to client, aborting game.")
+		os.Exit(0)
 		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
 	}
 	player2.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_, err = player2.Write([]byte("game started"))
+	err = player2.WriteJSON(gameStart{
+		GameStart: true,
+	})
 	if err != nil {
 		fmt.Println("error sending data to client, aborting game.")
+		os.Exit(0)
 		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
 	}
 
@@ -95,6 +129,8 @@ func StartCheckersGame(g *Game) {
 			data, err := currentConn.ReceiveData(0)
 			if err != nil {
 				fmt.Println(err)
+				fmt.Println("Client disconnected, shutting down.")
+				break
 			}
 			nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, currentConn)
 			hasDoubleJump := len(nextMoves) > 0
@@ -139,6 +175,8 @@ func StartCheckersGame(g *Game) {
 				}, 5)
 				if err != nil {
 					fmt.Println(err)
+					fmt.Println("Client disconnected, shutting down.")
+					break
 				}
 			}
 

@@ -1,12 +1,10 @@
 package checkers
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
-	"net"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Transport[SendT any, RcvT any] interface {
@@ -15,27 +13,16 @@ type Transport[SendT any, RcvT any] interface {
 }
 
 type WebTransport[SendT any, RcvT any] struct {
-	Conn net.Conn
+	Conn *websocket.Conn
 }
 
 func (w *WebTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error {
-	rawData, err := json.Marshal(T)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if dur != 0{
-			w.Conn.SetWriteDeadline(time.Now().Add(dur * time.Second))
-		} else {
-			w.Conn.SetWriteDeadline(time.Time{})
-		}
-		n, err := w.Conn.Write(rawData)
-		if err != nil {
-			return err
-		}
-		if n < len(rawData) {
-			return errors.New("not all data was sent to server")
-		}
-	return nil
+	if dur != 0{
+		w.Conn.SetWriteDeadline(time.Now().Add(dur * time.Second))
+	} else {
+		w.Conn.SetWriteDeadline(time.Time{})
+	}
+	return w.Conn.WriteJSON(T)
 }
 
 func (w *WebTransport[SendT, RcvT]) ReceiveData(dur time.Duration) (RcvT, error) {
@@ -44,14 +31,13 @@ func (w *WebTransport[SendT, RcvT]) ReceiveData(dur time.Duration) (RcvT, error)
 	} else {
 		w.Conn.SetReadDeadline(time.Time{})
 	}
-	decoder := json.NewDecoder(w.Conn)
 	var data RcvT
-	err := decoder.Decode(&data)
-	if err != nil {
-		var x RcvT
-		return x, fmt.Errorf("error reading data from connection: %w", err)
-	}
-	return data, err
+    err := w.Conn.ReadJSON(&data)
+    if err != nil {
+        var zero RcvT
+        return zero, fmt.Errorf("error reading data from connection: %w", err)
+    }
+    return data, nil
 }
 
 type LocalTransport[SendT any, RcvT any] struct {
