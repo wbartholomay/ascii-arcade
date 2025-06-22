@@ -40,7 +40,6 @@ func handleWSConnection(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Websocket upgrade error: %v", err)
 		return
 	}
-	defer conn.Close()
 	handleNewConnection(conn)
 }
 
@@ -125,7 +124,7 @@ func StartCheckersGame(g *Game) {
 	for {
 		data, err := currentConn.ReceiveData(0)
 		if data.IsConceding {
-
+			EndGame(g, cfg, !cfg.IsWhiteTurn)
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -140,8 +139,6 @@ func StartCheckersGame(g *Game) {
 			errMsg = moveErr.Error()
 		}
 
-		//TODO: gameover is definitely not being passed correctly to clients. SHould add some function which closes connections
-		//And invoke that on game over.
 		//notify client that of double jump/game over/error stuff
 		err = currentConn.SendData(checkers.ServerToClientData{
 			Board:             cfg.Board,
@@ -160,6 +157,7 @@ func StartCheckersGame(g *Game) {
 			gameOver := cfg.EndTurn()
 			if gameOver {
 				EndGame(g, cfg, cfg.IsWhiteTurn)
+				break
 			} else {
 				if currentConn == player1 {
 					currentConn = player2

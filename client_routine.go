@@ -32,6 +32,10 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 			fmt.Println(err)
 			return
 		}
+		if data.Winner != ""{
+			fmt.Printf("Game over %v won!\n", data.Winner)
+			os.Exit(0)
+		}
 
 		cfg := clientData{
 			Pieces:      data.Pieces,
@@ -74,9 +78,14 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 			case "help":
 				commandHelp()
 			case "concede":
-				commandConcede(cfg.IsWhiteTurn)
-				//TODO exit to main menu on concession
-				//WILL NEED TO SEND DATA TO SERVER :((((((((((((
+				if whiteTurn {
+					fmt.Println("White conceded, black wins!")
+				} else {
+					fmt.Println("Black conceded, white wins!")
+				}
+				transport.SendData(checkers.ClientToServerData{
+					IsConceding: true,
+				}, 5)
 				os.Exit(0)
 			}
 		}
@@ -216,13 +225,5 @@ func commandHelp() {
 
 	for _, cmd := range getCommands() {
 		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
-	}
-}
-
-func commandConcede(isWhiteTurn bool) {
-	if isWhiteTurn {
-		fmt.Println("White conceded, black wins!")
-	} else {
-		fmt.Println("Black conceded, white wins!")
 	}
 }

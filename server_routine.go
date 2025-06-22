@@ -21,6 +21,9 @@ func StartServerRoutine() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		if data.IsConceding {
+			EndGame(transport, cfg, !cfg.IsWhiteTurn)
+		}
 		nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, &transport)
 		hasDoubleJump := len(nextMoves) > 0
 		errMsg := ""
