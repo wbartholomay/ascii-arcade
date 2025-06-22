@@ -9,8 +9,8 @@ import (
 // validates the move can be made, and if it can the board is updated
 // takes in argument move and either a channel or a connection
 // returns a slice of strings, which contain possible moves for a double jump
-func (cfg *checkersCfg) MovePiece(move Move, 
-	transport Transport[ServerToClientData, ClientToServerData]) ([]string, [2] int, error) {
+func (cfg *Checkerscfg) MovePiece(move Move,
+	transport Transport[ServerToClientData, ClientToServerData]) ([]string, [2]int, error) {
 	piece := cfg.Board[move.Row][move.Col]
 	playerColor := GetPlayerColor(cfg.IsWhiteTurn)
 
@@ -86,11 +86,11 @@ func (cfg *checkersCfg) MovePiece(move Move,
 	if capturedPiece {
 		return cfg.checkSurroundingSquaresForCapture(targetRow, targetCol), [2]int{targetRow, targetCol}, nil
 	}
-	
-	return []string{},[2]int{}, nil
+
+	return []string{}, [2]int{}, nil
 }
 
-func (cfg *checkersCfg) checkSurroundingSquaresForCapture(row, col int) []string {
+func (cfg *Checkerscfg) checkSurroundingSquaresForCapture(row, col int) []string {
 	piece := cfg.Board[row][col]
 	captureMoves := []string{}
 
@@ -123,7 +123,7 @@ func (cfg *checkersCfg) checkSurroundingSquaresForCapture(row, col int) []string
 	return captureMoves
 }
 
-func (cfg *checkersCfg) isSquareAvailable(row, col int) (bool, error) {
+func (cfg *Checkerscfg) isSquareAvailable(row, col int) (bool, error) {
 	if isOutOfBounds(row, col) {
 		return false, errors.New("cannot move a piece outside of the board")
 	}

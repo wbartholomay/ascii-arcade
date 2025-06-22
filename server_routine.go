@@ -15,8 +15,6 @@ func StartServerRoutine() {
 	transport.SendData(checkers.ServerToClientData{
 		Board:    cfg.Board,
 		Pieces:   cfg.Pieces,
-		Error:    "nil",
-		GameOver: false,
 	}, 10)
 	for {
 			data, err := transport.ReceiveData(0)
@@ -25,7 +23,6 @@ func StartServerRoutine() {
 			}
 			nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, &transport)
 			hasDoubleJump := len(nextMoves) > 0
-			gameOver := false
 			errMsg := ""
 			if moveErr != nil {
 				fmt.Println(moveErr)
@@ -39,7 +36,7 @@ func StartServerRoutine() {
 				Board:    cfg.Board,
 				Pieces:   cfg.Pieces,
 				Error:    errMsg,
-				GameOver: gameOver,
+				Winner: "",
 				IsDoubleJump: hasDoubleJump,
 				DoubleJumpOptions: nextMoves,
 				PieceCoords: pieceCoords,
@@ -48,20 +45,36 @@ func StartServerRoutine() {
 				fmt.Println(err)
 			}
 
-			//connections should not be swapped on double jumps and failed moves
 			if !hasDoubleJump && moveErr == nil{
-				gameOver = cfg.EndTurn()
-
-				err = transport.SendData(checkers.ServerToClientData{
-					Board:    cfg.Board,
-					Pieces:   cfg.Pieces,
-					Error:    errMsg,
-					GameOver: gameOver,
-				}, 5)
-				if err != nil {
-					fmt.Println(err)
+				gameOver := cfg.EndTurn()
+				if gameOver {
+					EndGame(transport, cfg, cfg.IsWhiteTurn)
+				} else {
+					err = transport.SendData(checkers.ServerToClientData{
+						Board:    cfg.Board,
+						Pieces:   cfg.Pieces,
+						Error:    errMsg,
+					}, 5)
+					if err != nil {
+						fmt.Println(err)
 				}
+				}
+
+				
 			}
 
 	}
+}
+
+func EndGame(t checkers.LocalTransport[checkers.ServerToClientData, checkers.ClientToServerData], cfg checkers.Checkerscfg, whiteWon bool) {
+	winner := "w"
+	if !whiteWon{
+		winner = "b"
+	}
+
+	t.SendData(checkers.ServerToClientData{
+					Board:    cfg.Board,
+					Pieces:   cfg.Pieces,
+					Winner: winner,
+		}, 0)
 }

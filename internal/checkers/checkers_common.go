@@ -18,7 +18,7 @@ type Coords struct {
 const pieceWhite = "w"
 const pieceBlack = "b"
 
-type checkersCfg struct {
+type Checkerscfg struct {
 	Board           [8][8]Piece
 	Pieces          map[int]Coords
 	IsWhiteTurn     bool
@@ -56,7 +56,7 @@ func GetPlayerColor(isWhiteTurn bool) string {
 	return pieceBlack
 }
 
-func (cfg *checkersCfg) EndTurn() bool {
+func (cfg *Checkerscfg) EndTurn() bool {
 	cfg.IsWhiteTurn = !cfg.IsWhiteTurn
 	if cfg.WhitePieceCount == 0 {
 		fmt.Println("Black Wins!")
@@ -113,7 +113,7 @@ func convertDirection(direction moveDir) moveDir {
 	}
 }
 
-func (cfg *checkersCfg) clearBoard() {
+func (cfg *Checkerscfg) clearBoard() {
 	cfg.Board = [8][8]Piece{}
 }
 func GetActualID(color string, id int) int {

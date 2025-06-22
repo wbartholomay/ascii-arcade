@@ -1,10 +1,10 @@
 package checkers
 
-func StartCheckers() checkersCfg {
+func StartCheckers() Checkerscfg {
 	//initialize board
 	board, pieces := initializeBoard()
 
-	return checkersCfg{
+	return Checkerscfg{
 		Board:           board,
 		Pieces:          pieces,
 		IsWhiteTurn:     true,

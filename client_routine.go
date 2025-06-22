@@ -18,7 +18,6 @@ type clientData struct {
 }
 
 func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData]) {
-	//TODO: TIMING OUT HERE. NEED TO CONFIGURE SENDING DATA FROM THE SERVER TO THIS POINT.
 	whiteTurn := true
 	if playerNumber == "2" {
 		whiteTurn = false
@@ -28,6 +27,7 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 
 
 	for {
+		
 		data, err := transport.ReceiveData(0)
 		if err != nil {
 			fmt.Println(err)
@@ -77,9 +77,11 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 			case "concede":
 				commandConcede(cfg.IsWhiteTurn)
 				//TODO exit to main menu on concession
+				//WILL NEED TO SEND DATA TO SERVER :((((((((((((
 				os.Exit(0)
 			}
 		}
+		fmt.Println("Move sent to server. Waiting on other player...")
 	}
 }
 
@@ -145,7 +147,6 @@ func validateMove(cfg *clientData,
 func sendMoveToServer(clientData *clientData,
 	T checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData], 
 	move checkers.Move) error {
-	//send move to server. TODO replace this and other sending of data with abstractions which check the game type
 	err := T.SendData(checkers.ClientToServerData{
 		Move: move,
 	}, 10)
@@ -203,7 +204,8 @@ func sendMoveToServer(clientData *clientData,
 
 	clientData.Pieces = data.Pieces
 
-	if data.GameOver {
+	if data.Winner != "" {
+		fmt.Printf("Game over, %v won!\n", data.Winner)
 		return errors.New("game over")
 	}
 

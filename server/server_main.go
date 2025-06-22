@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type Game struct {
-	players       [2]*websocket.Conn
+	players       [2]*checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData]
 	id            int
 	playerOneTurn bool
 }
@@ -40,7 +40,7 @@ func handleWSConnection(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Websocket upgrade error: %v", err)
 		return
 	}
-	
+	defer conn.Close()
 	handleNewConnection(conn)
 }
 
@@ -66,8 +66,14 @@ func handleNewConnection(conn *websocket.Conn) {
 			fmt.Println(err)
 			return
 		}
-		go StartCheckersGame(&Game{
-			players:       [2]*websocket.Conn{waiting, conn},
+		connPlayerOne := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
+			Conn: waiting,
+		}
+		connPlayerTwo := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
+			Conn: conn,
+		}
+		StartCheckersGame(&Game{
+			players:       [2]*checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData]{&connPlayerOne, &connPlayerTwo},
 			id:            0,
 			playerOneTurn: true,
 		})
@@ -78,16 +84,16 @@ func handleNewConnection(conn *websocket.Conn) {
 func StartCheckersGame(g *Game) {
 	fmt.Println("Game started.")
 	player1, player2 := g.players[0], g.players[1]
-	defer player1.Close()
-	defer player2.Close()
+	defer player1.Conn.Close()
+	defer player2.Conn.Close()
 
 	//signal to clients that the game has started
 	time.Sleep(1 * time.Second)
 	type gameStart struct {
 		GameStart bool `json:"game_start"`
 	}
-	player1.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	err := player1.WriteJSON(gameStart{
+	player1.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	err := player1.Conn.WriteJSON(gameStart{
 		GameStart: true,
 	})
 	if err != nil {
@@ -95,8 +101,8 @@ func StartCheckersGame(g *Game) {
 		os.Exit(0)
 		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
 	}
-	player2.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	err = player2.WriteJSON(gameStart{
+	player2.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	err = player2.Conn.WriteJSON(gameStart{
 		GameStart: true,
 	})
 	if err != nil {
@@ -104,22 +110,13 @@ func StartCheckersGame(g *Game) {
 		os.Exit(0)
 		//TODO create a function that shuts down the handleInput go routines, as well as notifies both connections the game has been aborted
 	}
-
-	connPlayerOne := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
-		Conn: player1,
-	}
-	connPlayerTwo := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
-		Conn: player2,
-	}
-	currentConn := &connPlayerOne
+	currentConn := player1
 
 	cfg := checkers.StartCheckers()
 
 	err = currentConn.SendData(checkers.ServerToClientData{
 		Board:    cfg.Board,
 		Pieces:   cfg.Pieces,
-		Error:    "",
-		GameOver: false,
 	}, 10)
 	if err != nil {
 		fmt.Println(err)
@@ -127,6 +124,9 @@ func StartCheckersGame(g *Game) {
 
 	for {
 			data, err := currentConn.ReceiveData(0)
+			if data.IsConceding {
+
+			}
 			if err != nil {
 				fmt.Println(err)
 				fmt.Println("Client disconnected, shutting down.")
@@ -134,7 +134,6 @@ func StartCheckersGame(g *Game) {
 			}
 			nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, currentConn)
 			hasDoubleJump := len(nextMoves) > 0
-			gameOver := false
 			errMsg := ""
 			if moveErr != nil {
 				fmt.Println(moveErr)
@@ -148,7 +147,6 @@ func StartCheckersGame(g *Game) {
 				Board:    cfg.Board,
 				Pieces:   cfg.Pieces,
 				Error:    errMsg,
-				GameOver: gameOver,
 				IsDoubleJump: hasDoubleJump,
 				DoubleJumpOptions: nextMoves,
 				PieceCoords: pieceCoords,
@@ -159,27 +157,45 @@ func StartCheckersGame(g *Game) {
 
 			//connections should not be swapped on double jumps and failed moves
 			if !hasDoubleJump && moveErr == nil{
-				gameOver = cfg.EndTurn()
-				//switch conn
-				if currentConn == &connPlayerOne {
-					currentConn = &connPlayerTwo
+				gameOver := cfg.EndTurn()
+				if gameOver {
+					EndGame(g, cfg, cfg.IsWhiteTurn)
 				} else {
-					currentConn = &connPlayerOne
+					if currentConn == player1 {
+					currentConn = player2
+				} else {
+					currentConn = player1
 				}
 
 				err = currentConn.SendData(checkers.ServerToClientData{
 					Board:    cfg.Board,
 					Pieces:   cfg.Pieces,
-					Error:    errMsg,
-					GameOver: gameOver,
 				}, 5)
 				if err != nil {
 					fmt.Println(err)
 					fmt.Println("Client disconnected, shutting down.")
 					break
 				}
+				}
+
+				
 			}
 
 	}
 
+}
+
+func EndGame(g *Game, cfg checkers.Checkerscfg, whiteWon bool) {
+	winner := "w"
+	if !whiteWon{
+		winner = "b"
+	}
+
+	for _, player := range g.players {
+		player.SendData(checkers.ServerToClientData{
+					Board:    cfg.Board,
+					Pieces:   cfg.Pieces,
+					Winner: winner,
+		}, 5)
+	}
 }

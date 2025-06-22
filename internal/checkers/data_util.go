@@ -61,11 +61,12 @@ type ServerToClientData struct {
 	DoubleJumpOptions []string       `json:"double_jump_options"`
 	PieceCoords       [2]int         `json:"piece_coords"`
 	Error             string          `json:"error"`
-	GameOver          bool           `json:"game_over"`
+	Winner         string           `json:"winner"`
 	NotPlayerTurn     bool           `json:"not_player_turn"`
 }
 
 type ClientToServerData struct {
 	Move                Move   `json:"move"`
+	IsConceding				bool   `josn:"is_conceding"`
 	DoubleJumpDirection string `json:"double_jump_direction"`
 }
