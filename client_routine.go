@@ -42,7 +42,6 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 		checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
 
 		scanner := bufio.NewScanner(os.Stdin)
-		for {
 			fmt.Print("Checkers > ")
 			scanner.Scan()
 
@@ -73,7 +72,6 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 				//TODO exit to main menu on concession
 				os.Exit(0)
 			}
-		}
 	}
 }
 
@@ -149,7 +147,7 @@ func sendMoveToServer(clientData *clientData,
 
 	data := checkers.ServerToClientData{}
 	for {
-		data, err = T.ReceiveData(10)
+		data, err = T.ReceiveData(5)
 		if err != nil {
 			return err
 		}
@@ -179,7 +177,7 @@ func sendMoveToServer(clientData *clientData,
 					Col: data.PieceCoords[1],
 					Direction: checkers.MovesMap[input],
 				},
-			}, 10)
+			}, 5)
 			if err != nil {
 				return err
 			}
@@ -201,6 +199,7 @@ func sendMoveToServer(clientData *clientData,
 	if data.GameOver {
 		return errors.New("game over")
 	}
+
 	return nil
 }
 

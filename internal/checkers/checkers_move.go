@@ -85,34 +85,8 @@ func (cfg *checkersCfg) MovePiece(move Move,
 	//check for double capture
 	if capturedPiece {
 		return cfg.checkSurroundingSquaresForCapture(targetRow, targetCol), [2]int{targetRow, targetCol}, nil
-
-		// DisplayBoard(cfg.Board, cfg.IsWhiteTurn)
-		// fmt.Print("Another capture is available, enter one of the following directions: ")
-		// for _, moveStr := range nextMoves {
-		// 	fmt.Printf("%v, ", moveStr)
-		// }
-		// fmt.Println()
-		// err := transport.SendData(ServerToClientData{
-		// 	Board:             cfg.Board,
-		// 	Pieces:            cfg.Pieces,
-		// 	IsDoubleJump:      true,
-		// 	DoubleJumpOptions: nextMoves,
-		// }, 10)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// dataFromClient, err := transport.ReceiveData(10)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// return cfg.MovePiece(Move{
-		// 	Row:       targetRow,
-		// 	Col:       targetCol,
-		// 	Direction: MovesMap[dataFromClient.DoubleJumpDirection],
-		// }, transport)
 	}
+	
 	return []string{},[2]int{}, nil
 }
 

@@ -80,10 +80,6 @@ func StartCheckersGame(g *Game) {
 	currentConn := &connPlayerOne
 
 	cfg := checkers.StartCheckers()
-	
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	err = currentConn.SendData(checkers.ServerToClientData{
 		Board:    cfg.Board,
@@ -96,21 +92,18 @@ func StartCheckersGame(g *Game) {
 	}
 
 	for {
-		for {
-			data, _ := currentConn.ReceiveData(0)
+			data, err := currentConn.ReceiveData(0)
+			if err != nil {
+				fmt.Println(err)
+			}
 			nextMoves, pieceCoords, err := cfg.MovePiece(data.Move, currentConn)
 			hasDoubleJump := len(nextMoves) > 0
 			gameOver := false
-			if err == nil && !hasDoubleJump{
-				gameOver = cfg.EndTurn()
+			if err != nil {
+				fmt.Println(err)
 			}
 
-			if currentConn == &connPlayerOne {
-				currentConn = &connPlayerTwo
-			} else {
-				currentConn = &connPlayerOne
-			}
-
+			//notify client that of double jump/game over/error stuff
 			err = currentConn.SendData(checkers.ServerToClientData{
 				Board:    cfg.Board,
 				Pieces:   cfg.Pieces,
@@ -119,14 +112,31 @@ func StartCheckersGame(g *Game) {
 				IsDoubleJump: hasDoubleJump,
 				DoubleJumpOptions: nextMoves,
 				PieceCoords: pieceCoords,
-			}, 0)
+			}, 5)
 			if err != nil {
 				fmt.Println(err)
 			}
-			if len(nextMoves) == 0 {
-				break
+
+			if !hasDoubleJump {
+				gameOver = cfg.EndTurn()
+				//switch conn
+				if currentConn == &connPlayerOne {
+					currentConn = &connPlayerTwo
+				} else {
+					currentConn = &connPlayerOne
+				}
+
+				err = currentConn.SendData(checkers.ServerToClientData{
+					Board:    cfg.Board,
+					Pieces:   cfg.Pieces,
+					Error:    err,
+					GameOver: gameOver,
+				}, 5)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
-		}
+
 	}
 
 }

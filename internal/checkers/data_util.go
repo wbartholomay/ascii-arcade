@@ -25,6 +25,8 @@ func (w *WebTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error {
 		}
 		if dur != 0{
 			w.Conn.SetWriteDeadline(time.Now().Add(dur * time.Second))
+		} else {
+			w.Conn.SetWriteDeadline(time.Time{})
 		}
 		n, err := w.Conn.Write(rawData)
 		if err != nil {
@@ -37,25 +39,18 @@ func (w *WebTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error {
 }
 
 func (w *WebTransport[SendT, RcvT]) ReceiveData(dur time.Duration) (RcvT, error) {
-	//Create 1KB buffer to read from server(could definitely make this smaller, but should not matter)
-	// buf := make([]byte, 1024)
 	if dur != 0 {
 		w.Conn.SetReadDeadline(time.Now().Add(dur * time.Second))
+	} else {
+		w.Conn.SetReadDeadline(time.Time{})
 	}
 	decoder := json.NewDecoder(w.Conn)
 	var data RcvT
 	err := decoder.Decode(&data)
-	// n, err := w.Conn.Read(buf)
 	if err != nil {
 		var x RcvT
 		return x, fmt.Errorf("error reading data from connection: %w", err)
 	}
-	// rawData := buf[:n]
-	// var data RcvT
-	// if err = json.Unmarshal(rawData, &data); err != nil {
-	// 	var x RcvT
-	// 	return x, fmt.Errorf("error unmarshaling the json: %w", err)
-	// }
 	return data, err
 }
 
