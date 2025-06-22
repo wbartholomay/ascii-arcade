@@ -13,8 +13,8 @@ import (
 )
 
 type clientData struct {
-	Pieces             map[int]checkers.Coords
-	IsWhiteTurn        bool
+	Pieces      map[int]checkers.Coords
+	IsWhiteTurn bool
 }
 
 func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData]) {
@@ -25,9 +25,8 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 	}
 	fmt.Println()
 
-
 	for {
-		
+
 		data, err := transport.ReceiveData(0)
 		if err != nil {
 			fmt.Println(err)
@@ -35,13 +34,13 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 		}
 
 		cfg := clientData{
-			Pieces:             data.Pieces,
-			IsWhiteTurn:        whiteTurn,
+			Pieces:      data.Pieces,
+			IsWhiteTurn: whiteTurn,
 		}
 
 		checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
 
-		repl:
+	repl:
 		for {
 			scanner := bufio.NewScanner(os.Stdin)
 			fmt.Print("Checkers > ")
@@ -54,7 +53,7 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 			}
 
 			cmd := input[0]
-			switch cmd{
+			switch cmd {
 			case "move":
 				move, err := validateMove(&cfg, input[1:]...)
 				if err != nil {
@@ -113,7 +112,7 @@ func cleanInput(text string) []string {
 	return substrings
 }
 
-func validateMove(cfg *clientData, 
+func validateMove(cfg *clientData,
 	params ...string) (checkers.Move, error) {
 	//validate params - expecting move <row> <col> <direction>
 	if len(params) < 2 {
@@ -145,7 +144,7 @@ func validateMove(cfg *clientData,
 }
 
 func sendMoveToServer(clientData *clientData,
-	T checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData], 
+	T checkers.Transport[checkers.ClientToServerData, checkers.ServerToClientData],
 	move checkers.Move) error {
 	err := T.SendData(checkers.ClientToServerData{
 		Move: move,
@@ -185,8 +184,8 @@ func sendMoveToServer(clientData *clientData,
 			}
 			err = T.SendData(checkers.ClientToServerData{
 				Move: checkers.Move{
-					Row: data.PieceCoords[0],
-					Col: data.PieceCoords[1],
+					Row:       data.PieceCoords[0],
+					Col:       data.PieceCoords[1],
 					Direction: checkers.MovesMap[input],
 				},
 			}, 5)

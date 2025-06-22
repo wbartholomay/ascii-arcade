@@ -14,7 +14,7 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 type Game struct {
@@ -66,10 +66,10 @@ func handleNewConnection(conn *websocket.Conn) {
 			fmt.Println(err)
 			return
 		}
-		connPlayerOne := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
+		connPlayerOne := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData]{
 			Conn: waiting,
 		}
-		connPlayerTwo := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData] {
+		connPlayerTwo := checkers.WebTransport[checkers.ServerToClientData, checkers.ClientToServerData]{
 			Conn: conn,
 		}
 		StartCheckersGame(&Game{
@@ -115,71 +115,70 @@ func StartCheckersGame(g *Game) {
 	cfg := checkers.StartCheckers()
 
 	err = currentConn.SendData(checkers.ServerToClientData{
-		Board:    cfg.Board,
-		Pieces:   cfg.Pieces,
+		Board:  cfg.Board,
+		Pieces: cfg.Pieces,
 	}, 10)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	for {
-			data, err := currentConn.ReceiveData(0)
-			if data.IsConceding {
+		data, err := currentConn.ReceiveData(0)
+		if data.IsConceding {
 
-			}
-			if err != nil {
-				fmt.Println(err)
-				fmt.Println("Client disconnected, shutting down.")
-				break
-			}
-			nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, currentConn)
-			hasDoubleJump := len(nextMoves) > 0
-			errMsg := ""
-			if moveErr != nil {
-				fmt.Println(moveErr)
-				errMsg = moveErr.Error()
-			}
+		}
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Client disconnected, shutting down.")
+			break
+		}
+		nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, currentConn)
+		hasDoubleJump := len(nextMoves) > 0
+		errMsg := ""
+		if moveErr != nil {
+			fmt.Println(moveErr)
+			errMsg = moveErr.Error()
+		}
 
-			//TODO: gameover is definitely not being passed correctly to clients. SHould add some function which closes connections
-			//And invoke that on game over.
-			//notify client that of double jump/game over/error stuff
-			err = currentConn.SendData(checkers.ServerToClientData{
-				Board:    cfg.Board,
-				Pieces:   cfg.Pieces,
-				Error:    errMsg,
-				IsDoubleJump: hasDoubleJump,
-				DoubleJumpOptions: nextMoves,
-				PieceCoords: pieceCoords,
-			}, 5)
-			if err != nil {
-				fmt.Println(err)
-			}
+		//TODO: gameover is definitely not being passed correctly to clients. SHould add some function which closes connections
+		//And invoke that on game over.
+		//notify client that of double jump/game over/error stuff
+		err = currentConn.SendData(checkers.ServerToClientData{
+			Board:             cfg.Board,
+			Pieces:            cfg.Pieces,
+			Error:             errMsg,
+			IsDoubleJump:      hasDoubleJump,
+			DoubleJumpOptions: nextMoves,
+			PieceCoords:       pieceCoords,
+		}, 5)
+		if err != nil {
+			fmt.Println(err)
+		}
 
-			//connections should not be swapped on double jumps and failed moves
-			if !hasDoubleJump && moveErr == nil{
-				gameOver := cfg.EndTurn()
-				if gameOver {
-					EndGame(g, cfg, cfg.IsWhiteTurn)
-				} else {
-					if currentConn == player1 {
+		//connections should not be swapped on double jumps and failed moves
+		if !hasDoubleJump && moveErr == nil {
+			gameOver := cfg.EndTurn()
+			if gameOver {
+				EndGame(g, cfg, cfg.IsWhiteTurn)
+			} else {
+				if currentConn == player1 {
 					currentConn = player2
 				} else {
 					currentConn = player1
 				}
 
 				err = currentConn.SendData(checkers.ServerToClientData{
-					Board:    cfg.Board,
-					Pieces:   cfg.Pieces,
+					Board:  cfg.Board,
+					Pieces: cfg.Pieces,
 				}, 5)
 				if err != nil {
 					fmt.Println(err)
 					fmt.Println("Client disconnected, shutting down.")
 					break
 				}
-				}
-
-				
 			}
+
+		}
 
 	}
 
@@ -187,15 +186,15 @@ func StartCheckersGame(g *Game) {
 
 func EndGame(g *Game, cfg checkers.Checkerscfg, whiteWon bool) {
 	winner := "w"
-	if !whiteWon{
+	if !whiteWon {
 		winner = "b"
 	}
 
 	for _, player := range g.players {
 		player.SendData(checkers.ServerToClientData{
-					Board:    cfg.Board,
-					Pieces:   cfg.Pieces,
-					Winner: winner,
+			Board:  cfg.Board,
+			Pieces: cfg.Pieces,
+			Winner: winner,
 		}, 5)
 	}
 }

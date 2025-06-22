@@ -20,14 +20,14 @@ const (
 
 var GameType gameType
 
-//definitely overusing global scope, should remove these
+// definitely overusing global scope, should remove these
 var (
 	clientToServer chan checkers.ClientToServerData
 	serverToClient chan checkers.ServerToClientData
 	playerNumber   string
 )
 
-//TODO: set this as environment variable
+// TODO: set this as environment variable
 const serverURL = "localhost:2000/ws"
 
 func main() {
@@ -61,7 +61,7 @@ func StartLocalGame() {
 	go StartServerRoutine()
 	transport := checkers.LocalTransport[checkers.ClientToServerData, checkers.ServerToClientData]{
 		SendChannel: clientToServer,
-		RcvChannel: serverToClient,
+		RcvChannel:  serverToClient,
 	}
 	ClientRoutine(&transport)
 }
@@ -80,7 +80,7 @@ func StartOnlineGame() {
 	//TODO: create abstraction of this function, which sends something to the server to notify the client is closed?
 	//May not be necessary as the server will timeout when trying to read from the client, will see about this
 	defer serverConn.Close()
-	transport := checkers.WebTransport[checkers.ClientToServerData, checkers.ServerToClientData] {
+	transport := checkers.WebTransport[checkers.ClientToServerData, checkers.ServerToClientData]{
 		Conn: serverConn,
 	}
 

@@ -17,7 +17,7 @@ type WebTransport[SendT any, RcvT any] struct {
 }
 
 func (w *WebTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error {
-	if dur != 0{
+	if dur != 0 {
 		w.Conn.SetWriteDeadline(time.Now().Add(dur * time.Second))
 	} else {
 		w.Conn.SetWriteDeadline(time.Time{})
@@ -32,17 +32,17 @@ func (w *WebTransport[SendT, RcvT]) ReceiveData(dur time.Duration) (RcvT, error)
 		w.Conn.SetReadDeadline(time.Time{})
 	}
 	var data RcvT
-    err := w.Conn.ReadJSON(&data)
-    if err != nil {
-        var zero RcvT
-        return zero, fmt.Errorf("error reading data from connection: %w", err)
-    }
-    return data, nil
+	err := w.Conn.ReadJSON(&data)
+	if err != nil {
+		var zero RcvT
+		return zero, fmt.Errorf("error reading data from connection: %w", err)
+	}
+	return data, nil
 }
 
 type LocalTransport[SendT any, RcvT any] struct {
 	SendChannel chan SendT
-	RcvChannel chan RcvT
+	RcvChannel  chan RcvT
 }
 
 func (l *LocalTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error {
@@ -51,7 +51,7 @@ func (l *LocalTransport[SendT, RcvT]) SendData(T SendT, dur time.Duration) error
 }
 
 func (l *LocalTransport[SendT, RcvT]) ReceiveData(dur time.Duration) (RcvT, error) {
-	return <- l.RcvChannel, nil
+	return <-l.RcvChannel, nil
 }
 
 type ServerToClientData struct {
@@ -60,13 +60,13 @@ type ServerToClientData struct {
 	IsDoubleJump      bool           `json:"is_double_jump"`
 	DoubleJumpOptions []string       `json:"double_jump_options"`
 	PieceCoords       [2]int         `json:"piece_coords"`
-	Error             string          `json:"error"`
-	Winner         string           `json:"winner"`
+	Error             string         `json:"error"`
+	Winner            string         `json:"winner"`
 	NotPlayerTurn     bool           `json:"not_player_turn"`
 }
 
 type ClientToServerData struct {
 	Move                Move   `json:"move"`
-	IsConceding				bool   `josn:"is_conceding"`
+	IsConceding         bool   `josn:"is_conceding"`
 	DoubleJumpDirection string `json:"double_jump_direction"`
 }

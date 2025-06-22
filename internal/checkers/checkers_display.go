@@ -8,7 +8,7 @@ func DisplayBoard(board [8][8]Piece, isWhiteTurn bool) {
 
 	rowNum := 0
 	increment := 1
-	checkIndex := func (i int) bool {
+	checkIndex := func(i int) bool {
 		if isWhiteTurn {
 			return i < 8
 		} else {
@@ -24,25 +24,25 @@ func DisplayBoard(board [8][8]Piece, isWhiteTurn bool) {
 		fmt.Println("       0       1       2       3       4       5       6       7    ")
 	}
 
-	for ; checkIndex(rowNum); rowNum += increment{
+	for ; checkIndex(rowNum); rowNum += increment {
 		fmt.Println("   —————————————————————————————————————————————————————————————————")
 		squareStr := ""
-		if (rowNum % 2 == 0 && isWhiteTurn) || (rowNum % 2 != 0 && !isWhiteTurn){
+		if (rowNum%2 == 0 && isWhiteTurn) || (rowNum%2 != 0 && !isWhiteTurn) {
 			squareStr = "   |       |#######|       |#######|       |#######|       |#######|"
 		} else {
 			squareStr = "   |#######|       |#######|       |#######|       |#######|       |"
 		}
 		fmt.Println(squareStr)
-		rowStr := fmt.Sprintf("%v  |", string(rune('a' + rowNum)))
+		rowStr := fmt.Sprintf("%v  |", string(rune('a'+rowNum)))
 
 		colNum := 0
 		if !isWhiteTurn {
 			colNum = 7
 		}
 
-		for ; checkIndex(colNum); colNum += increment{
+		for ; checkIndex(colNum); colNum += increment {
 			piece := board[rowNum][colNum]
-			if (rowNum % 2 == colNum % 2){
+			if rowNum%2 == colNum%2 {
 				rowStr += fmt.Sprintf("%v|", piece.renderPiece())
 			} else {
 				rowStr += "#######|"
@@ -54,7 +54,7 @@ func DisplayBoard(board [8][8]Piece, isWhiteTurn bool) {
 	fmt.Println("   —————————————————————————————————————————————————————————————————")
 }
 
-func (piece *Piece) renderPiece() string{
+func (piece *Piece) renderPiece() string {
 	if piece.Color == "" {
 		return "       "
 	}
@@ -76,7 +76,6 @@ func (piece *Piece) renderPiece() string{
 	if piece.getDisplayID() < 10 {
 		pieceStr += " "
 	}
-	
 
 	return pieceStr + " "
 }
@@ -86,7 +85,7 @@ func toSubscript(n int) string {
 	return subs[n]
 }
 
-//This function kinda sucks but its temporary anyway
+// This function kinda sucks but its temporary anyway
 func (piece *Piece) getDisplayID() int {
 	displayId := 0
 	if piece.Color == pieceWhite {
