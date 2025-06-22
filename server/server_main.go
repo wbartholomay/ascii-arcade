@@ -100,6 +100,7 @@ func StartCheckersGame(g *Game) {
 			hasDoubleJump := len(nextMoves) > 0
 			gameOver := false
 			if err != nil {
+				//TODO: IF AN ERROR IS THROWN HERE ORIGINAL CONNECTION SHOULD BE NOTIFIED AND CONNECTIONS SHOULD NOT BE SWAPPED
 				fmt.Println(err)
 			}
 
