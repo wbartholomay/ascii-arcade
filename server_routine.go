@@ -18,33 +18,50 @@ func StartServerRoutine() {
 		Error:    "nil",
 		GameOver: false,
 	}, 10)
-
 	for {
-		//inner for loop to continue requesting moves from the client until no more double jumps are available
-		for {
-			data, _ := transport.ReceiveData(0)
-			nextMoves, pieceCoords, err := cfg.MovePiece(data.Move, &transport)
+			data, err := transport.ReceiveData(0)
+			if err != nil {
+				fmt.Println(err)
+			}
+			nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, &transport)
 			hasDoubleJump := len(nextMoves) > 0
 			gameOver := false
-			if err == nil && !hasDoubleJump{
-				gameOver = cfg.EndTurn()
+			errMsg := ""
+			if moveErr != nil {
+				fmt.Println(moveErr)
+				errMsg = moveErr.Error()
 			}
 
+			//TODO: gameover is definitely not being passed correctly to clients. SHould add some function which closes connections
+			//And invoke that on game over.
+			//notify client that of double jump/game over/error stuff
 			err = transport.SendData(checkers.ServerToClientData{
 				Board:    cfg.Board,
 				Pieces:   cfg.Pieces,
-				Error:    err.Error(),
+				Error:    errMsg,
 				GameOver: gameOver,
 				IsDoubleJump: hasDoubleJump,
 				DoubleJumpOptions: nextMoves,
 				PieceCoords: pieceCoords,
-			}, 0)
+			}, 5)
 			if err != nil {
 				fmt.Println(err)
 			}
-			if len(nextMoves) == 0 {
-				break
+
+			//connections should not be swapped on double jumps and failed moves
+			if !hasDoubleJump && moveErr == nil{
+				gameOver = cfg.EndTurn()
+
+				err = transport.SendData(checkers.ServerToClientData{
+					Board:    cfg.Board,
+					Pieces:   cfg.Pieces,
+					Error:    errMsg,
+					GameOver: gameOver,
+				}, 5)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
-			}
+
 	}
 }

@@ -40,7 +40,7 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 		}
 
 		checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
-		
+
 		repl:
 		for {
 			scanner := bufio.NewScanner(os.Stdin)
@@ -68,6 +68,9 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 					continue
 				}
 
+				if GameType == gameLocal {
+					whiteTurn = !whiteTurn
+				}
 				break repl
 			case "help":
 				commandHelp()
