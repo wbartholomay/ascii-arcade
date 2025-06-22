@@ -40,8 +40,10 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 		}
 
 		checkers.DisplayBoard(data.Board, cfg.IsWhiteTurn)
-
-		scanner := bufio.NewScanner(os.Stdin)
+		
+		repl:
+		for {
+			scanner := bufio.NewScanner(os.Stdin)
 			fmt.Print("Checkers > ")
 			scanner.Scan()
 
@@ -65,6 +67,8 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 					fmt.Printf("Error when sending move to server: %v\n", err)
 					continue
 				}
+
+				break repl
 			case "help":
 				commandHelp()
 			case "concede":
@@ -72,6 +76,7 @@ func ClientRoutine(transport checkers.Transport[checkers.ClientToServerData, che
 				//TODO exit to main menu on concession
 				os.Exit(0)
 			}
+		}
 	}
 }
 
@@ -151,6 +156,9 @@ func sendMoveToServer(clientData *clientData,
 		if err != nil {
 			return err
 		}
+		if data.Error != "" {
+			return errors.New(data.Error)
+		}
 		//DOUBLE JUMP HANDLING: MAYBE COULD MOVE THIS OUT INTO MAIN FUNC?
 		if data.IsDoubleJump {
 			checkers.DisplayBoard(data.Board, clientData.IsWhiteTurn)
@@ -184,10 +192,6 @@ func sendMoveToServer(clientData *clientData,
 		} else {
 			break
 		}
-	}
-
-	if data.Error != nil {
-		return data.Error
 	}
 
 	if GameType != gameOnline {

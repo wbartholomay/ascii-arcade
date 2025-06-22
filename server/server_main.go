@@ -84,7 +84,7 @@ func StartCheckersGame(g *Game) {
 	err = currentConn.SendData(checkers.ServerToClientData{
 		Board:    cfg.Board,
 		Pieces:   cfg.Pieces,
-		Error:    nil,
+		Error:    "",
 		GameOver: false,
 	}, 10)
 	if err != nil {
@@ -96,19 +96,22 @@ func StartCheckersGame(g *Game) {
 			if err != nil {
 				fmt.Println(err)
 			}
-			nextMoves, pieceCoords, err := cfg.MovePiece(data.Move, currentConn)
+			nextMoves, pieceCoords, moveErr := cfg.MovePiece(data.Move, currentConn)
 			hasDoubleJump := len(nextMoves) > 0
 			gameOver := false
-			if err != nil {
-				//TODO: IF AN ERROR IS THROWN HERE ORIGINAL CONNECTION SHOULD BE NOTIFIED AND CONNECTIONS SHOULD NOT BE SWAPPED
-				fmt.Println(err)
+			errMsg := ""
+			if moveErr != nil {
+				fmt.Println(moveErr)
+				errMsg = moveErr.Error()
 			}
 
+			//TODO: gameover is definitely not being passed correctly to clients. SHould add some function which closes connections
+			//And invoke that on game over.
 			//notify client that of double jump/game over/error stuff
 			err = currentConn.SendData(checkers.ServerToClientData{
 				Board:    cfg.Board,
 				Pieces:   cfg.Pieces,
-				Error:    err,
+				Error:    errMsg,
 				GameOver: gameOver,
 				IsDoubleJump: hasDoubleJump,
 				DoubleJumpOptions: nextMoves,
@@ -118,7 +121,8 @@ func StartCheckersGame(g *Game) {
 				fmt.Println(err)
 			}
 
-			if !hasDoubleJump {
+			//connections should not be swapped on double jumps and failed moves
+			if !hasDoubleJump && moveErr == nil{
 				gameOver = cfg.EndTurn()
 				//switch conn
 				if currentConn == &connPlayerOne {
@@ -130,7 +134,7 @@ func StartCheckersGame(g *Game) {
 				err = currentConn.SendData(checkers.ServerToClientData{
 					Board:    cfg.Board,
 					Pieces:   cfg.Pieces,
-					Error:    err,
+					Error:    errMsg,
 					GameOver: gameOver,
 				}, 5)
 				if err != nil {

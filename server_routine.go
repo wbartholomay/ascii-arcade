@@ -15,7 +15,7 @@ func StartServerRoutine() {
 	transport.SendData(checkers.ServerToClientData{
 		Board:    cfg.Board,
 		Pieces:   cfg.Pieces,
-		Error:    nil,
+		Error:    "nil",
 		GameOver: false,
 	}, 10)
 
@@ -33,7 +33,7 @@ func StartServerRoutine() {
 			err = transport.SendData(checkers.ServerToClientData{
 				Board:    cfg.Board,
 				Pieces:   cfg.Pieces,
-				Error:    err,
+				Error:    err.Error(),
 				GameOver: gameOver,
 				IsDoubleJump: hasDoubleJump,
 				DoubleJumpOptions: nextMoves,
